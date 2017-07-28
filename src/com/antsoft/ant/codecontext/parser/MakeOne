@@ -1,0 +1,16 @@
+#!/bin/sh
+
+MYPROJECT=/home/antide/ant/classes
+
+
+if [ -f $1 ]
+	then 
+		echo " Now, the file "$1" is Compiled....."
+		javac $1 -d $MYPROJECT
+		echo
+else
+	echo " file does not find "
+	exit
+fi
+
+unset MYPROJECT

@@ -1,0 +1,2876 @@
+/*
+ * JavaBatchParser.java
+ * Title: °³¹Ì
+ * Part : syntactic analyzer (in parser - batch version)
+ * Copyright (c) 1998 Ant Company, all right reservedDOT
+ * Author: Kim, Sung-hoon(kahn@antjDOTcom)
+ * Company: Antsoft
+ * Description: Integrated CASE Tool(Ant)
+ * Starting at 98.12. 24
+ *
+ * tool : CUP(Constructor of Useful Parser)
+ *
+ * Version 1.0.0
+ *   - (25) : construncting grammar(initializing)
+ *   - 99.1.8. : constructing parse tree
+ *
+ */
+
+
+// Preliminaries to set up and use the scanner
+
+init with {: JavaScanner.initialize(); :};
+scan with {: return JavaScanner.nextToken(); :};
+
+// Terminal Symbols (token type returned by the scanner)
+
+terminal String ID;
+terminal String SLITERAL;
+terminal String ILITERAL;
+terminal String RLITERAL;
+terminal String CLITERAL;
+terminal ADD;
+terminal SUB;
+terminal MUL;
+terminal DIV;
+terminal MOD;
+terminal ASSIGN;
+terminal GT;
+terminal LT;
+terminal LN;
+terminal BWN;
+terminal QM;
+terminal COLON;
+terminal EQ;
+terminal LE;
+terminal GE;
+terminal NE;
+terminal LA;
+terminal LO;
+terminal DP;
+terminal DM;
+terminal BWA;
+terminal BWO;
+terminal BWEO;
+terminal SL;
+terminal SR;
+terminal USR;
+terminal AADD;
+terminal ASUB;
+terminal AMUL;
+terminal ADIV;
+terminal AMOD;
+terminal ABWA;
+terminal ABWO;
+terminal ABWN;
+terminal ASL;
+terminal ASR;
+terminal AUSR;
+terminal LP;
+terminal RP;
+terminal LB;
+terminal RB;
+terminal LS;
+terminal RS;
+terminal SEMIC;
+terminal COMMA;
+terminal DOT;
+terminal ABSTRACT;
+terminal BOOLEAN;
+terminal BREAK;
+terminal BYTE;
+terminal CASE;
+terminal CATCH;
+terminal CHAR;
+terminal CLASS;
+terminal CONTINUE;
+terminal DEFAULT;
+terminal DO;
+terminal DOUBLE;
+terminal ELSE;
+terminal EXTENDS;
+terminal FALSE;
+terminal FINAL;
+terminal FINALLY;
+terminal FLOAT;
+terminal FOR;
+terminal IF;
+terminal IMPLEMENTS;
+terminal IMPORT;
+terminal INSTANCEOF;
+terminal INT;
+terminal INTERFACE;
+terminal LONG;
+terminal NATIVE;
+terminal NEW;
+terminal NULL;
+terminal PACKAGE;
+terminal PRIVATE;
+terminal PROTECTED;
+terminal PUBLIC;
+terminal RETURN;
+terminal SHORT;
+terminal STATIC;
+terminal SUPER;
+terminal SYNCHRONIZED;
+terminal SWITCH;
+terminal THIS;
+terminal THROW;
+terminal THROWS;
+terminal TRANSIENT;
+terminal TRUE;
+terminal TRY;
+terminal VOID;
+terminal VOLATILE;
+terminal WHILE;
+
+// Nonterminal Symbols
+
+non terminal TreeNode compilationUnit;
+non terminal TreeNode packageDeclaration;
+non terminal TreeNode name;
+non terminal TreeNode simpleName;
+non terminal TreeNode qualifiedName;
+non terminal TreeNode importDeclarations;
+non terminal TreeNode importDeclaration;
+non terminal TreeNode singleTypeImportDeclaration;
+non terminal TreeNode typeImportOnDemandDeclaration;
+non terminal TreeNode typeDeclarations;
+non terminal TreeNode typeDeclaration;
+non terminal TreeNode classDeclaration;
+non terminal TreeNode modifiers;
+non terminal TreeNode modifier;
+non terminal TreeNode super;
+non terminal TreeNode interfaces;
+non terminal TreeNode interfaceTypeList;
+non terminal TreeNode classBody;
+non terminal TreeNode classBodyDeclarations;
+non terminal TreeNode classBodyDeclaration;
+non terminal TreeNode classMemberDeclaration;
+non terminal TreeNode fieldDeclaration;
+non terminal TreeNode variableDeclarators;
+non terminal TreeNode variableDeclarator;
+non terminal TreeNode variableDeclaratorId;
+non terminal TreeNode variableInitializer;
+non terminal TreeNode methodDeclaration;
+non terminal TreeNode methodHeader;
+non terminal TreeNode methodDeclarator;
+non terminal TreeNode formalParameterList;
+non terminal TreeNode formalParameter;
+non terminal TreeNode throws;
+non terminal TreeNode classTypeList;
+non terminal TreeNode methodBody;
+non terminal TreeNode staticInitializer;
+non terminal TreeNode constructorDeclaration;
+non terminal TreeNode constructorDeclarator;
+non terminal TreeNode constructorBody;
+non terminal TreeNode explicitConstructorInvocation;
+non terminal TreeNode interfaceDeclaration;
+non terminal TreeNode extendsInterfaces;
+non terminal TreeNode interfaceBody;
+non terminal TreeNode interfaceMemberDeclarations;
+non terminal TreeNode interfaceMemberDeclaration;
+non terminal TreeNode constantDeclaration;
+non terminal TreeNode abstractMethodDeclaration ;
+non terminal TreeNode arrayInitializer;
+non terminal TreeNode variableInitializers;
+non terminal TreeNode type;
+non terminal TreeNode primitiveType;
+non terminal TreeNode numericType;
+non terminal TreeNode integralType;
+non terminal TreeNode floatingPointType;
+non terminal TreeNode referenceType;
+non terminal TreeNode classOrInterfaceType;
+non terminal TreeNode classType;
+non terminal TreeNode interfaceType;
+non terminal TreeNode arrayType;
+non terminal TreeNode block;
+non terminal TreeNode blockStatements;
+non terminal TreeNode blockStatement;
+non terminal TreeNode localVariableDeclarationStatement;
+non terminal TreeNode localVariableDeclaration;
+non terminal TreeNode statement;
+non terminal TreeNode statementNoShortIf;
+non terminal TreeNode statementWithoutTrailingSubstatement;
+non terminal TreeNode ifThenStatement;
+non terminal TreeNode ifThenElseStatement;
+non terminal TreeNode ifThenElseStatementNoShortIf;
+non terminal TreeNode emptyStatement;
+non terminal TreeNode labeledStatement;
+non terminal TreeNode labeledStatementNoShortIf;
+non terminal TreeNode expressionStatement;
+non terminal TreeNode statementExpression;
+non terminal TreeNode switchStatement;
+non terminal TreeNode switchBlock;
+non terminal TreeNode switchBlockStatementGroups;
+non terminal TreeNode switchBlockStatementGroup;
+non terminal TreeNode switchLabels;
+non terminal TreeNode switchLabel;
+non terminal TreeNode whileStatement;
+non terminal TreeNode whileStatementNoShortIf;
+non terminal TreeNode doStatement;
+non terminal TreeNode forStatement;
+non terminal TreeNode forStatementNoShortIf;
+non terminal TreeNode forInit;
+non terminal TreeNode forUpdate;
+non terminal TreeNode statementExpressionList;
+non terminal TreeNode breakStatement;
+non terminal TreeNode continueStatement;
+non terminal TreeNode returnStatement;
+non terminal TreeNode throwStatement;
+non terminal TreeNode synchronizedStatement;
+non terminal TreeNode tryStatement;
+non terminal TreeNode catches;
+non terminal TreeNode catchClause;
+non terminal TreeNode finally;
+non terminal TreeNode constantExpression;
+non terminal TreeNode expression;
+non terminal TreeNode assignmentExpression;
+non terminal TreeNode assignment;
+non terminal TreeNode assignmentOperator;
+non terminal TreeNode conditionalExpression;
+non terminal TreeNode conditionalOrExpression;
+non terminal TreeNode conditionalAndExpression;
+non terminal TreeNode inclusiveOrExpression;
+non terminal TreeNode exclusiveOrExpression;
+non terminal TreeNode andExpression;
+non terminal TreeNode equalityExpression;
+non terminal TreeNode relationalExpression;
+non terminal TreeNode shiftExpression;
+non terminal TreeNode additiveExpression;
+non terminal TreeNode multiplicativeExpression;
+non terminal TreeNode unaryExpression;
+non terminal TreeNode preIncrementExpression;
+non terminal TreeNode preDecrementExpression;
+non terminal TreeNode unaryExpressionNotPlusMinus;
+non terminal TreeNode postfixExpression;
+non terminal TreeNode postIncrementExpression;
+non terminal TreeNode postDecrementExpression;
+non terminal TreeNode castExpression;
+non terminal TreeNode primary;
+non terminal TreeNode primaryNoNewArray;
+non terminal TreeNode classInstanceCreationExpression;
+non terminal TreeNode argumentList;
+non terminal TreeNode fieldAccess;
+non terminal TreeNode methodInvocation;
+non terminal TreeNode arrayAccess;
+non terminal TreeNode arrayCreationExpression;
+non terminal TreeNode dimExprs;
+non terminal TreeNode dimExpr;
+non terminal TreeNode dims;
+non terminal TreeNode literal;
+
+
+// precedences, but this grammar includes the precedences
+
+
+// the grammar begins here.
+
+compilationUnit ::= 
+	| packageDeclaration:e1 importDeclarations:e2 typeDeclarations:e3
+	{:
+		CompilationUnit node = new CompilationUnit(0,0);
+		node.addChild(e1,1);
+		node.addChild(e2,2);
+		node.addChild(e3,0);
+		RESULT = node;
+	:}
+	| packageDeclaration:e1 typeDeclarations:e2
+	{:
+		CompilationUnit node = new CompilationUnit(0,0);
+		node.addChild(e1,1);
+		node.addChild(e2,0);
+		RESULT = node;
+	:}
+	| importDeclarations:e1 typeDeclarations:e2
+	{:
+		CompilationUnit node = new CompilationUnit(0,0);
+		node.addChild(e1,2);
+		node.addChild(e2,0);
+		RESULT = node;
+	:}
+	| typeDeclarations:e1
+	{:
+		CompilationUnit node = new CompilationUnit(0,0);
+		node.addChild(e1,0);
+		RESULT = node;
+	:}
+	| packageDeclaration:e1 importDeclarations:e2
+	{:
+		CompilationUnit node = new CompilationUnit(0,0);
+		node.addChild(e1,1);
+		node.addChild(e2,2);
+		RESULT = node;
+	:}
+	| packageDeclaration:e1
+	{:
+		CompilationUnit node = new CompilationUnit(0,0);
+		node.addChild(e1,1);
+		RESULT = node;
+	:}
+	| importDeclarations:e1
+	{:
+		CompilationUnit node = new CompilationUnit(0,0);
+		node.addChild(e1,2);
+		RESULT = node;
+	:}
+;
+
+packageDeclaration ::= PACKAGE name:e1 SEMIC  
+	{:
+		PackageDeclaration node=new PackageDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+name ::= simpleName:e1 
+	{:
+		Name node=new Name(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| qualifiedName:e1
+	{:
+		Name node=new Name(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+simpleName ::= ID:e1
+	{:
+		RESULT = new SimpleName(e1.toString(),0,0);
+	:}
+;
+
+qualifiedName ::= name:e1 DOT ID:e2
+	{:
+		//String s=e2.toString();
+		QualifiedName node=new QualifiedName(e2.toString(),0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+importDeclarations ::= importDeclaration:e1
+	{:
+		ImportDeclarations node = new ImportDeclarations(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| importDeclarations:e1 importDeclaration:e2
+	{:
+		ImportDeclarations node = new ImportDeclarations(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+importDeclaration ::= singleTypeImportDeclaration:e1
+	{:
+		ImportDeclaration node = new ImportDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| typeImportOnDemandDeclaration:e1
+	{:
+		ImportDeclaration node = new ImportDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+singleTypeImportDeclaration ::= IMPORT name:e1  SEMIC
+	{:
+		SingleTypeImportDeclaration node = new SingleTypeImportDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+typeImportOnDemandDeclaration ::= IMPORT name:e1 DOT MUL SEMIC
+	{:
+		TypeImportOnDemandDeclaration node = new TypeImportOnDemandDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+typeDeclarations ::= typeDeclaration:e1
+	{:
+		TypeDeclarations node = new TypeDeclarations(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| typeDeclarations:e1 typeDeclaration:e2
+	{:
+		TypeDeclarations node = new TypeDeclarations(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+typeDeclaration ::= classDeclaration:e1
+	{:
+		TypeDeclaration node = new TypeDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| interfaceDeclaration:e1
+	{:
+		TypeDeclaration node = new TypeDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| SEMIC
+	{:
+		TypeDeclaration node = new TypeDeclaration(0,0);
+		RESULT = node;
+	:}
+;
+
+classDeclaration ::= modifiers:e1 CLASS ID:e2 super:e3 interfaces:e4 classBody:e5
+	{:
+		ClassDeclaration node = new ClassDeclaration(e2.toString(),0,0,7);
+		node.addChild(e1);
+		node.addChild(e3);
+		node.addChild(e4);
+		node.addChild(e5);
+		RESULT = node;
+	:}
+	| modifiers:e1 CLASS ID:e2 super:e3 classBody:e4
+	{:
+		ClassDeclaration node = new ClassDeclaration(e2.toString(),0,0,6);
+		node.addChild(e1);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| modifiers:e1 CLASS ID:e2 interfaces:e3 classBody:e4
+	{:
+		ClassDeclaration node = new ClassDeclaration(e2.toString(),0,0,5);
+		node.addChild(e1);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| CLASS ID:e1 super:e2 interfaces:e3 classBody:e4
+	{:
+		ClassDeclaration node = new ClassDeclaration(e1.toString(),0,0,3);
+		node.addChild(e2);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| modifiers:e1 CLASS ID:e2 classBody:e3
+	{:
+		ClassDeclaration node = new ClassDeclaration(e2.toString(),0,0,4);
+		node.addChild(e1);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| CLASS ID:e1 super:e2 classBody:e3
+	{:
+		ClassDeclaration node = new ClassDeclaration(e1.toString(),0,0,2);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| CLASS ID:e1 interfaces:e2 classBody:e3
+	{:
+		ClassDeclaration node = new ClassDeclaration(e1.toString(),0,0,1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| CLASS ID:e1 classBody:e2
+	{:
+		ClassDeclaration node = new ClassDeclaration(e1.toString(),0,0,0);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+modifiers ::= modifier:e1 
+	{:
+		Modifiers node = new Modifiers(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| modifiers:e1 modifier:e2
+	{:
+		Modifiers node = new Modifiers(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+modifier ::= PUBLIC:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| PROTECTED:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| PRIVATE:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| STATIC:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| FINAL:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| TRANSIENT:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| VOLATILE:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| ABSTRACT:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| NATIVE:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| SYNCHRONIZED:e1
+	{:
+		Modifier node = new Modifier(e1.toString(),0,0);
+		RESULT = node;
+	:}
+;
+
+super ::= EXTENDS classType:e1
+	{:
+		Super node = new Super(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+interfaces ::= IMPLEMENTS interfaceTypeList:e1
+	{:
+		Interfaces node = new Interfaces(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+interfaceTypeList ::= interfaceType:e1
+	{:
+		InterfaceTypeList node = new InterfaceTypeList(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| interfaceTypeList:e1 COMMA interfaceType:e2
+	{:
+		InterfaceTypeList node = new InterfaceTypeList(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+classBody ::= LB  classBodyDeclarations:e1  RB
+	{:
+		ClassBody node = new ClassBody(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB  RB
+	{:
+		ClassBody node = new ClassBody(0,0);
+		RESULT = node;
+	:}
+;
+
+classBodyDeclarations ::= classBodyDeclaration:e1
+	{:
+		ClassBodyDeclarations node = new ClassBodyDeclarations(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| classBodyDeclarations:e1 classBodyDeclaration:e2
+	{:
+		ClassBodyDeclarations node = new ClassBodyDeclarations(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+classBodyDeclaration ::= classMemberDeclaration:e1
+	{:
+		ClassBodyDeclaration node = new ClassBodyDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| staticInitializer:e1
+	{:
+		ClassBodyDeclaration node = new ClassBodyDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| constructorDeclaration:e1
+	{:
+		ClassBodyDeclaration node = new ClassBodyDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| block:e1
+	{:
+		ClassBodyDeclaration node = new ClassBodyDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+classMemberDeclaration ::= fieldDeclaration:e1
+	{:
+		ClassMemberDeclaration node = new ClassMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| methodDeclaration:e1
+	{:
+		ClassMemberDeclaration node = new ClassMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| classDeclaration:e1
+	{:
+		ClassMemberDeclaration node = new ClassMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| interfaceDeclaration:e1
+	{:
+		ClassMemberDeclaration node = new ClassMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+fieldDeclaration ::= modifiers:e1 type:e2 variableDeclarators:e3 SEMIC
+	{:
+		FieldDeclaration node = new FieldDeclaration(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| type:e1 variableDeclarators:e2 SEMIC
+	{:
+		FieldDeclaration node = new FieldDeclaration(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+variableDeclarators ::= variableDeclarator:e1
+	{:
+		VariableDeclarators node = new VariableDeclarators(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| variableDeclarators:e1 COMMA variableDeclarator:e2
+	{:
+		VariableDeclarators node = new VariableDeclarators(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+variableDeclarator ::= variableDeclaratorId:e1
+	{:
+		VariableDeclarator node = new VariableDeclarator(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| variableDeclaratorId:e1 ASSIGN variableInitializer:e2
+	{:
+		VariableDeclarator node = new VariableDeclarator(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+variableDeclaratorId ::= ID:e1
+	{:
+		VariableDeclaratorId node = new VariableDeclaratorId(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| variableDeclaratorId:e1 LS RS
+	{:
+		VariableDeclaratorId node = new VariableDeclaratorId(null,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+variableInitializer ::= expression:e1
+	{:
+		VariableInitializer node = new VariableInitializer(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| arrayInitializer:e1
+	{:
+		VariableInitializer node = new VariableInitializer(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+methodDeclaration ::= methodHeader:e1 methodBody:e2
+	{:
+		MethodDeclaration node = new MethodDeclaration(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+methodHeader ::= modifiers:e1 type:e2 methodDeclarator:e3 throws:e4
+	{:
+		MethodHeader node = new MethodHeader(0,0,3,false);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| modifiers:e1 type:e2 methodDeclarator:e3
+	{:
+		MethodHeader node = new MethodHeader(0,0,2,false);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| type:e1 methodDeclarator:e2 throws:e3
+	{:
+		MethodHeader node = new MethodHeader(0,0,1,false);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| type:e1 methodDeclarator:e2
+	{:
+		MethodHeader node = new MethodHeader(0,0,0,false);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| modifiers:e1 VOID methodDeclarator:e2 throws:e3
+	{:
+		MethodHeader node = new MethodHeader(0,0,3,true);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| modifiers:e1 VOID methodDeclarator:e2 
+	{:
+		MethodHeader node = new MethodHeader(0,0,2,true);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| VOID methodDeclarator:e1 throws:e2
+	{:
+		MethodHeader node = new MethodHeader(0,0,1,true);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| VOID methodDeclarator:e1
+	{:
+		MethodHeader node = new MethodHeader(0,0,0,true);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+methodDeclarator ::= ID:e1 LP formalParameterList:e2 RP
+	{:
+		MethodDeclarator node = new MethodDeclarator(e1.toString(),0,0);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| ID:e1 LP RP
+	{:
+		MethodDeclarator node = new MethodDeclarator(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| methodDeclarator:e1 LS RS
+	{:
+		MethodDeclarator node = new MethodDeclarator(null,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+formalParameterList ::= formalParameterList:e1 COMMA formalParameter:e2
+	{:
+		FormalParameterList node = new FormalParameterList(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| formalParameter:e1
+	{:
+		FormalParameterList node = new FormalParameterList(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+formalParameter ::= type:e1 variableDeclaratorId:e2
+	{:
+		FormalParameter node = new FormalParameter(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| modifiers:e1 type:e2 variableDeclaratorId:e3
+	{:
+		FormalParameter node = new FormalParameter(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+;
+
+throws ::= THROWS classTypeList:e1
+	{:
+		Throws node = new Throws(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+classTypeList ::= classType:e1
+	{:
+		ClassTypeList node = new ClassTypeList(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| classTypeList:e1 COMMA classType:e2
+	{:
+		ClassTypeList node = new ClassTypeList(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+methodBody ::= block:e1
+	{:
+		MethodBody node = new MethodBody(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| SEMIC
+	{:
+		MethodBody node = new MethodBody(0,0);
+		RESULT = node;
+	:}
+;
+
+staticInitializer ::= STATIC block:e1
+	{:
+		StaticInitializer node = new StaticInitializer(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+constructorDeclaration ::= modifiers:e1 constructorDeclarator:e2 throws:e3 constructorBody:e4
+	{:
+		ConstructorDeclaration node = new ConstructorDeclaration(0,0,3);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| modifiers:e1 constructorDeclarator:e2 constructorBody:e3
+	{:
+		ConstructorDeclaration node = new ConstructorDeclaration(0,0,2);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| constructorDeclarator:e1 throws:e2 constructorBody:e3
+	{:
+		ConstructorDeclaration node = new ConstructorDeclaration(0,0,1);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| constructorDeclarator:e1 constructorBody:e2
+	{:
+		ConstructorDeclaration node = new ConstructorDeclaration(0,0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+constructorDeclarator ::= simpleName:e1 LP formalParameterList:e2 RP
+	{:
+		ConstructorDeclarator node = new ConstructorDeclarator(0,0,true);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| simpleName:e1 LP RP
+	{:
+		ConstructorDeclarator node = new ConstructorDeclarator(0,0,false);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+constructorBody ::= LB explicitConstructorInvocation:e1 blockStatements:e2 RB
+	{:
+		ConstructorBody node = new ConstructorBody(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| LB explicitConstructorInvocation:e1 RB
+	{:
+		ConstructorBody node = new ConstructorBody(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB blockStatement:e1 RB
+	{:
+		ConstructorBody node = new ConstructorBody(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB RB
+	{:
+		ConstructorBody node = new ConstructorBody(0,0);
+		RESULT = node;
+	:}
+;
+
+explicitConstructorInvocation ::= THIS LP argumentList:e1 RP SEMIC 
+	{:
+		ExplicitConstructorInvocation node 
+				= new ExplicitConstructorInvocation(0,0,true,"this",false);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| THIS  LP RP SEMIC
+	{:
+		ExplicitConstructorInvocation node 
+				= new ExplicitConstructorInvocation(0,0,false,"this",false);
+		RESULT = node;
+	:}
+	| SUPER LP argumentList:e1 RP SEMIC
+	{:
+		ExplicitConstructorInvocation node 
+				= new ExplicitConstructorInvocation(0,0,true,"super",false);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| SUPER LP RP SEMIC
+	{:
+		ExplicitConstructorInvocation node 
+				= new ExplicitConstructorInvocation(0,0,false,"super",false);
+		RESULT = node;
+	:}
+	| primary:e1 DOT SUPER LP argumentList:e2 RP SEMIC
+	{:
+		ExplicitConstructorInvocation node 
+				= new ExplicitConstructorInvocation(0,0,true,"super",true);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| primary:e1 DOT SUPER LP RP SEMIC
+	{:
+		ExplicitConstructorInvocation node 
+				= new ExplicitConstructorInvocation(0,0,false,"super",true);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+interfaceDeclaration ::= modifiers:e1 INTERFACE ID:e2 extendsInterfaces:e3 interfaceBody:e4
+	{:
+		InterfaceDeclaration node 
+				= new InterfaceDeclaration(e2.toString(),0,0,3);
+		node.addChild(e1);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| modifiers:e1 INTERFACE ID:e2 interfaceBody:e3
+	{:
+		InterfaceDeclaration node 
+				= new InterfaceDeclaration(e2.toString(),0,0,2);
+		node.addChild(e1);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| INTERFACE ID:e1 extendsInterfaces:e2 interfaceBody:e3
+	{:
+		InterfaceDeclaration node 
+				= new InterfaceDeclaration(e1.toString(),0,0,1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| INTERFACE ID:e1 interfaceBody:e2
+	{:
+		InterfaceDeclaration node 
+				= new InterfaceDeclaration(e1.toString(),0,0,0);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+extendsInterfaces ::= EXTENDS interfaceType:e1
+	{:
+		ExtendsInterfaces node = new ExtendsInterfaces(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| extendsInterfaces:e1 COMMA interfaceType:e2
+	{:
+		ExtendsInterfaces node = new ExtendsInterfaces(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+interfaceBody ::= LB interfaceMemberDeclarations:e1 RB
+	{:
+		InterfaceBody node = new InterfaceBody(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB RB
+	{:
+		InterfaceBody node = new InterfaceBody(0,0);
+		RESULT = node;
+	:}
+;
+
+interfaceMemberDeclarations ::= interfaceMemberDeclaration:e1
+	{:
+		InterfaceMemberDeclarations node = new InterfaceMemberDeclarations(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| interfaceMemberDeclarations:e1 interfaceMemberDeclaration:e2
+	{:
+		InterfaceMemberDeclarations node = new InterfaceMemberDeclarations(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+interfaceMemberDeclaration ::= constantDeclaration:e1
+	{:
+		InterfaceMemberDeclaration node = new InterfaceMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| abstractMethodDeclaration:e1
+	{:
+		InterfaceMemberDeclaration node = new InterfaceMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| classDeclaration:e1
+	{:
+		InterfaceMemberDeclaration node = new InterfaceMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| interfaceDeclaration:e1
+	{:
+		InterfaceMemberDeclaration node = new InterfaceMemberDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+constantDeclaration ::= fieldDeclaration:e1
+	{:
+		ConstantDeclaration node = new ConstantDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+abstractMethodDeclaration  ::= methodHeader:e1 SEMIC
+	{:
+		AbstractMethodDeclaration node = new AbstractMethodDeclaration(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+arrayInitializer ::= LB variableInitializers:e1 COMMA RB
+	{:
+		ArrayInitializer node = new ArrayInitializer(0,0);
+		node.setHasLastComma(true);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB variableInitializers:e1 RB
+	{:
+		ArrayInitializer node = new ArrayInitializer(0,0);
+		node.setHasLastComma(false);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB COMMA RB
+	{:
+		ArrayInitializer node = new ArrayInitializer(0,0);
+		node.setHasLastComma(true);
+		RESULT = node;
+	:}
+	| LB RB
+	{:
+		ArrayInitializer node = new ArrayInitializer(0,0);
+		node.setHasLastComma(false);
+		RESULT = node;
+	:}
+;
+
+variableInitializers ::= variableInitializer:e1
+	{:
+		VariableInitializers node = new VariableInitializers(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| variableInitializers:e1 COMMA variableInitializer:e2
+	{:
+		VariableInitializers node = new VariableInitializers(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+type ::= primitiveType:e1
+	{:
+		Type node = new Type(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| referenceType:e1
+	{:
+		Type node = new Type(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+primitiveType ::= numericType:e1
+	{:
+		PrimitiveType node = new PrimitiveType(0,0,e1.toString());
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| BOOLEAN
+	{:
+		PrimitiveType node = new PrimitiveType(0,0,"boolean");
+		RESULT = node;
+	:}
+;
+
+numericType ::= integralType:e1
+	{:
+		NumericType node = new NumericType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| floatingPointType:e1
+	{:
+		NumericType node = new NumericType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+integralType ::= BYTE 
+	{:
+		IntegralType node = new IntegralType(0,0,"byte");
+		RESULT = node;
+	:}
+	| SHORT 
+	{:
+		IntegralType node = new IntegralType(0,0,"short");
+		RESULT = node;
+	:}
+	| INT 
+	{:
+		IntegralType node = new IntegralType(0,0,"int");
+		RESULT = node;
+	:}
+	| LONG 
+	{:
+		IntegralType node = new IntegralType(0,0,"long");
+		RESULT = node;
+	:}
+	| CHAR
+	{:
+		IntegralType node = new IntegralType(0,0,"char");
+		RESULT = node;
+	:}
+;
+
+floatingPointType ::= FLOAT 
+	{:
+		FloatingPointType node = new FloatingPointType(0,0,"float");
+		RESULT = node;
+	:}
+	| DOUBLE
+	{:
+		FloatingPointType node = new FloatingPointType(0,0,"double");
+		RESULT = node;
+	:}
+;
+
+referenceType ::= classOrInterfaceType:e1
+	{:
+		ReferenceType node = new ReferenceType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| arrayType:e1
+	{:
+		ReferenceType node = new ReferenceType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+classOrInterfaceType ::= name:e1
+	{:
+		ClassOrInterfaceType node = new ClassOrInterfaceType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+classType ::= classOrInterfaceType:e1
+	{:
+		ClassType node = new ClassType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+interfaceType ::= classOrInterfaceType:e1
+	{:
+		InterfaceType node = new InterfaceType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+arrayType ::= primitiveType:e1 LS RS  
+	{:
+		ArrayType node = new ArrayType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| name:e1 LS RS 
+	{:
+		ArrayType node = new ArrayType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| arrayType:e1 LS RS
+	{:
+		ArrayType node = new ArrayType(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+block ::= LB blockStatements:e1 RB
+	{:
+		Block node = new Block(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB RB
+	{:
+		Block node = new Block(0,0);
+		RESULT = node;
+	:}
+;
+
+blockStatements ::= blockStatement:e1
+	{:
+		BlockStatements node = new BlockStatements(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| blockStatements:e1 blockStatement:e2
+	{:
+		BlockStatements node = new BlockStatements(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+blockStatement ::= localVariableDeclarationStatement:e1
+	{:
+		BlockStatement node = new BlockStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| statement:e1
+	{:
+		BlockStatement node = new BlockStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| classDeclaration:e1
+	{:
+		BlockStatement node = new BlockStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+localVariableDeclarationStatement ::= localVariableDeclaration:e1 SEMIC
+	{:
+		LocalVariableDeclarationStatement node 
+				= new LocalVariableDeclarationStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+localVariableDeclaration ::= type:e1 variableDeclarators:e2
+	{:
+		LocalVariableDeclaration node 
+				= new LocalVariableDeclaration(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+statement ::= statementWithoutTrailingSubstatement:e1
+	{:
+		Statement node = new Statement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| labeledStatement:e1
+	{:
+		Statement node = new Statement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| ifThenStatement:e1
+	{:
+		Statement node = new Statement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| ifThenElseStatement:e1
+	{:
+		Statement node = new Statement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| whileStatement:e1
+	{:
+		Statement node = new Statement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| forStatement:e1
+	{:
+		Statement node = new Statement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+statementNoShortIf ::= statementWithoutTrailingSubstatement:e1
+	{:
+		StatementNoShortIf node = new StatementNoShortIf(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| labeledStatementNoShortIf:e1
+	{:
+		StatementNoShortIf node = new StatementNoShortIf(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| ifThenElseStatementNoShortIf:e1
+	{:
+		StatementNoShortIf node = new StatementNoShortIf(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| whileStatementNoShortIf:e1
+	{:
+		StatementNoShortIf node = new StatementNoShortIf(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| forStatementNoShortIf:e1
+	{:
+		StatementNoShortIf node = new StatementNoShortIf(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+statementWithoutTrailingSubstatement ::= block:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| emptyStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| expressionStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| switchStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| doStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| breakStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| continueStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| returnStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| synchronizedStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| throwStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| tryStatement:e1
+	{:
+		StatementWithoutTrailingSubstatement node 
+				= new StatementWithoutTrailingSubstatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+ifThenStatement ::= IF LP expression:e1 RP statement:e2
+	{:
+		IfThenStatement node = new IfThenStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+ifThenElseStatement ::= IF LP expression:e1 RP statementNoShortIf:e2 ELSE statement:e3
+	{:
+		IfThenElseStatement node = new IfThenElseStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+;
+
+ifThenElseStatementNoShortIf ::= IF LP expression:e1 RP statementNoShortIf:e2 ELSE statementNoShortIf:e3
+	{:
+		IfThenElseStatementNoShortIf node = new IfThenElseStatementNoShortIf(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+;
+
+emptyStatement ::= SEMIC
+	{:
+		EmptyStatement node = new EmptyStatement(0,0);
+		RESULT = node;
+	:}
+;
+
+labeledStatement ::= ID:e1 COLON statement:e2
+	{:
+		LabeledStatement node = new LabeledStatement(e1.toString(),0,0);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+labeledStatementNoShortIf ::= ID:e1 COLON statementNoShortIf:e2
+	{:
+		LabeledStatementNoShortIf node 
+				= new LabeledStatementNoShortIf(e1.toString(),0,0);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+expressionStatement ::= statementExpression:e1 SEMIC
+	{:
+		ExpressionStatement node = new ExpressionStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+statementExpression ::= assignment:e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| preIncrementExpression :e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| preDecrementExpression:e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| postIncrementExpression:e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| postDecrementExpression:e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| methodInvocation:e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| classInstanceCreationExpression:e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+switchStatement ::= SWITCH LP expression:e1 RP switchBlock:e2
+	{:
+		SwitchStatement node = new SwitchStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+switchBlock ::= LB switchBlockStatementGroups:e1 switchLabels:e2 RB
+	{:
+		SwitchStatement node = new SwitchStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| LB switchBlockStatementGroups:e1 RB
+	{:
+		SwitchStatement node = new SwitchStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB switchLabels:e1 RB
+	{:
+		SwitchStatement node = new SwitchStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LB RB
+	{:
+		SwitchStatement node = new SwitchStatement(0,0);
+		RESULT = node;
+	:}
+;
+
+switchBlockStatementGroups ::= switchBlockStatementGroup:e1
+	{:
+		SwitchBlockStatementGroups node = new SwitchBlockStatementGroups(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| switchBlockStatementGroups:e1 switchBlockStatementGroup:e2
+	{:
+		SwitchBlockStatementGroups node = new SwitchBlockStatementGroups(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+switchBlockStatementGroup ::= switchLabels:e1 blockStatements:e2
+	{:
+		SwitchBlockStatementGroup node = new SwitchBlockStatementGroup(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+switchLabels ::= switchLabel:e1 
+	{:
+		SwitchLabels node = new SwitchLabels(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| switchLabels:e1 switchLabel:e2
+	{:
+		SwitchLabels node = new SwitchLabels(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+switchLabel ::= CASE constantExpression:e1 COLON 
+	{:
+		SwitchLabels node = new SwitchLabels(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| DEFAULT COLON
+	{:
+		SwitchLabels node = new SwitchLabels(0,0);
+		RESULT = node;
+	:}
+;
+
+whileStatement ::= WHILE LP expression:e1 RP statement:e2
+	{:
+		SwitchLabels node = new SwitchLabels(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+whileStatementNoShortIf ::= WHILE LP expression:e1 RP statementNoShortIf:e2
+	{:
+		WhileStatementNoShortIf node = new WhileStatementNoShortIf(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+doStatement ::= DO statement:e1 WHILE LP expression:e2 RP SEMIC
+	{:
+		DoStatement node = new DoStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+forStatement ::= FOR LP forInit:e1 SEMIC expression:e2 SEMIC forUpdate:e3 RP statement:e4
+	{:
+		ForStatement node = new ForStatement(0,0,7);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| FOR LP forInit:e1 SEMIC expression:e2 SEMIC RP statement:e3
+	{:
+		ForStatement node = new ForStatement(0,0,6);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| FOR LP forInit:e1 SEMIC SEMIC forUpdate:e2 RP statement:e3
+	{:
+		ForStatement node = new ForStatement(0,0,5);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC expression:e1 SEMIC forUpdate:e2 RP statement:e3
+	{:
+		ForStatement node = new ForStatement(0,0,3);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| FOR LP forInit:e1 SEMIC SEMIC RP statement:e2
+	{:
+		ForStatement node = new ForStatement(0,0,4);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC expression:e1 SEMIC RP statement:e2
+	{:
+		ForStatement node = new ForStatement(0,0,2);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC SEMIC forUpdate:e1 RP statement:e2
+	{:
+		ForStatement node = new ForStatement(0,0,1);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC SEMIC RP statement:e1
+	{:
+		ForStatement node = new ForStatement(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+forStatementNoShortIf ::= FOR LP forInit:e1 SEMIC expression:e2 SEMIC forUpdate:e3 RP statementNoShortIf:e4
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,7);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| FOR LP forInit:e1 SEMIC expression:e2 SEMIC RP statementNoShortIf:e3
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,6);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| FOR LP forInit:e1 SEMIC SEMIC forUpdate:e2 RP statementNoShortIf:e3
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,5);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC expression:e1 SEMIC forUpdate:e2 RP statementNoShortIf:e3
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,3);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| FOR LP forInit:e1 SEMIC SEMIC RP statementNoShortIf:e2
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,4);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC expression:e1 SEMIC RP statementNoShortIf:e2
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,2);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC SEMIC forUpdate:e1 RP statementNoShortIf:e2
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,1);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| FOR LP SEMIC SEMIC RP statementNoShortIf:e1
+	{:
+		ForStatementNoShortIf node = new ForStatementNoShortIf(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+forInit ::= statementExpressionList:e1 
+	{:
+		ForInit node = new ForInit(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| localVariableDeclaration:e1
+	{:
+		ForInit node = new ForInit(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+forUpdate ::= statementExpressionList:e1
+	{:
+		ForUpdate node = new ForUpdate(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+statementExpressionList ::= statementExpression:e1
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| statementExpressionList:e1 COMMA statementExpression:e2
+	{:
+		StatementExpression node = new StatementExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+breakStatement ::= BREAK ID:e1 SEMIC
+	{:
+		BreakStatement node = new BreakStatement(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| BREAK SEMIC
+	{:
+		BreakStatement node = new BreakStatement(null,0,0);
+		RESULT = node;
+	:}
+;
+
+continueStatement ::= CONTINUE ID:e1 SEMIC
+	{:
+		ContinueStatement node = new ContinueStatement(e1.toString(),0,0);
+		RESULT = node;
+	:}
+	| CONTINUE SEMIC
+	{:
+		ContinueStatement node = new ContinueStatement(null,0,0);
+		RESULT = node;
+	:}
+;
+
+returnStatement ::= RETURN expression:e1 SEMIC
+	{:
+		ReturnStatement node = new ReturnStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| RETURN SEMIC
+	{:
+		ReturnStatement node = new ReturnStatement(0,0);
+		RESULT = node;
+	:}
+;
+
+throwStatement ::= THROW expression:e1 SEMIC
+	{:
+		ThrowStatement node = new ThrowStatement(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+synchronizedStatement ::= SYNCHRONIZED LP expression:e1 RP block:e2
+	{:
+		SynchronizedStatement node = new SynchronizedStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+tryStatement ::= TRY block:e1 catches:e2
+	{:
+		TryStatement node = new TryStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	|  TRY block:e1 catches:e2 finally:e3
+	{:
+		TryStatement node = new TryStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	|  TRY block:e1 finally:e2
+	{:
+		TryStatement node = new TryStatement(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+catches ::= catchClause:e1
+	{:
+		Catches node = new Catches(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| catches:e1 catchClause:e2
+	{:
+		Catches node = new Catches(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+catchClause ::= CATCH LP formalParameter:e1 RP block:e2
+	{:
+		CatchClause node = new CatchClause(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+finally ::= FINALLY block:e1
+	{:
+		Finally node = new Finally(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+constantExpression ::= expression:e1
+	{:
+		ConstantExpression node = new ConstantExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+expression ::= assignmentExpression:e1
+	{:
+		Expression node = new Expression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+assignmentExpression ::= conditionalExpression:e1
+	{:
+		AssignmentExpression node = new AssignmentExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| assignment:e1
+	{:
+		AssignmentExpression node = new AssignmentExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+assignment ::= conditionalExpression:e1 assignmentOperator:e2 expression:e3
+	{:
+		Assignment node = new Assignment(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+;
+
+assignmentOperator ::= ASSIGN
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ASSIGN);
+		RESULT = node;
+	:}
+	| AMUL 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.AMUL);
+		RESULT = node;
+	:}
+	| ADIV 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ADIV);
+		RESULT = node;
+	:}
+	| AMOD 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.AMOD);
+		RESULT = node;
+	:}
+	| AADD 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.AADD);
+		RESULT = node;
+	:}
+	| ASUB 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ASUB);
+		RESULT = node;
+	:}
+	| ASL 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ASL);
+		RESULT = node;
+	:}
+	| ASR 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ASR);
+		RESULT = node;
+	:}
+	| AUSR 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.AUSR);
+		RESULT = node;
+	:}
+	| ABWA 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ABWA);
+		RESULT = node;
+	:}
+	| ABWN 
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ABWN);
+		RESULT = node;
+	:}
+	| ABWO
+	{:
+		AssignmentOperator node = new AssignmentOperator(0,0,sym.ABWO);
+		RESULT = node;
+	:}
+;
+
+conditionalExpression ::= conditionalOrExpression:e1
+	{:
+		ConditionalExpression node = new ConditionalExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| conditionalOrExpression:e1 QM expression:e2 COLON conditionalExpression:e3
+	{:
+		ConditionalExpression node = new ConditionalExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+;
+
+conditionalOrExpression ::= conditionalAndExpression:e1
+	{:
+		ConditionalOrExpression node = new ConditionalOrExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| conditionalOrExpression:e1 LO conditionalAndExpression:e2
+	{:
+		ConditionalOrExpression node = new ConditionalOrExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+conditionalAndExpression ::= inclusiveOrExpression:e1
+	{:
+		ConditionalAndExpression node = new ConditionalAndExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| conditionalAndExpression:e1 LA inclusiveOrExpression:e2 
+	{:
+		ConditionalAndExpression node = new ConditionalAndExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+inclusiveOrExpression ::= exclusiveOrExpression:e1 
+	{:
+		InclusiveOrExpression node = new InclusiveOrExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| inclusiveOrExpression:e1 BWO exclusiveOrExpression:e2
+	{:
+		InclusiveOrExpression node = new InclusiveOrExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+exclusiveOrExpression ::= andExpression:e1
+	{:
+		ExclusiveOrExpression node = new ExclusiveOrExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| exclusiveOrExpression:e1 BWEO andExpression:e2
+	{:
+		ExclusiveOrExpression node = new ExclusiveOrExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+andExpression ::= equalityExpression:e1
+	{:
+		AndExpression node = new AndExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| andExpression:e1 BWA equalityExpression:e2
+	{:
+		AndExpression node = new AndExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+equalityExpression ::= relationalExpression:e1
+	{:
+		EqualityExpression node = new EqualityExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| equalityExpression:e1 EQ relationalExpression:e2
+	{:
+		EqualityExpression node = new EqualityExpression(0,0,sym.EQ);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| equalityExpression:e1 NE relationalExpression:e2
+	{:
+		EqualityExpression node = new EqualityExpression(0,0,sym.NE);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+relationalExpression ::= shiftExpression:e1
+	{:
+		RelationalExpression node = new RelationalExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| relationalExpression:e1 LT shiftExpression:e2
+	{:
+		RelationalExpression node = new RelationalExpression(0,0,sym.LT);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| relationalExpression:e1 GT shiftExpression:e2
+	{:
+		RelationalExpression node = new RelationalExpression(0,0,sym.GT);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| relationalExpression:e1 LE shiftExpression:e2
+	{:
+		RelationalExpression node = new RelationalExpression(0,0,sym.LE);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| relationalExpression:e1 GE shiftExpression:e2
+	{:
+		RelationalExpression node = new RelationalExpression(0,0,sym.GE);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| relationalExpression:e1 INSTANCEOF referenceType:e2
+	{:
+		RelationalExpression node = new RelationalExpression(0,0,sym.INSTANCEOF);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+shiftExpression ::= additiveExpression:e1
+	{:
+		ShiftExpression node = new ShiftExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| shiftExpression:e1 SL additiveExpression:e2
+	{:
+		ShiftExpression node = new ShiftExpression(0,0,sym.SL);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| shiftExpression:e1 SR additiveExpression:e2
+	{:
+		ShiftExpression node = new ShiftExpression(0,0,sym.SR);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| shiftExpression:e1 USR additiveExpression:e2
+	{:
+		ShiftExpression node = new ShiftExpression(0,0,sym.USR);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+additiveExpression ::= multiplicativeExpression:e1
+	{:
+		AdditiveExpression node = new AdditiveExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| additiveExpression:e1 ADD multiplicativeExpression:e2
+	{:
+		AdditiveExpression node = new AdditiveExpression(0,0,sym.ADD);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| additiveExpression:e1 SUB multiplicativeExpression:e2
+	{:
+		AdditiveExpression node = new AdditiveExpression(0,0,sym.SUB);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+multiplicativeExpression ::= unaryExpression:e1
+	{:
+		MultiplicativeExpression node = new MultiplicativeExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| multiplicativeExpression:e1 MUL unaryExpression:e2
+	{:
+		MultiplicativeExpression node = new MultiplicativeExpression(0,0,sym.MUL);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| multiplicativeExpression:e1 DIV unaryExpression:e2
+	{:
+		MultiplicativeExpression node = new MultiplicativeExpression(0,0,sym.DIV);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| multiplicativeExpression:e1 MOD unaryExpression:e2
+	{:
+		MultiplicativeExpression node = new MultiplicativeExpression(0,0,sym.MOD);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+unaryExpression ::= preIncrementExpression:e1
+	{:
+		UnaryExpression node = new UnaryExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| preDecrementExpression:e1
+	{:
+		UnaryExpression node = new UnaryExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| ADD unaryExpression:e1
+	{:
+		UnaryExpression node = new UnaryExpression(0,0,sym.ADD);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| SUB unaryExpression:e1
+	{:
+		UnaryExpression node = new UnaryExpression(0,0,sym.SUB);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| unaryExpressionNotPlusMinus:e1
+	{:
+		UnaryExpression node = new UnaryExpression(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+preIncrementExpression ::= DP unaryExpression:e1
+	{:
+		PreIncrementExpression node = new PreIncrementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+preDecrementExpression ::= DM unaryExpression:e1
+	{:
+		PreDecrementExpression node = new PreDecrementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+unaryExpressionNotPlusMinus ::= postfixExpression:e1
+	{:
+		UnaryExpressionNotPlusMinus node 
+				= new UnaryExpressionNotPlusMinus(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| castExpression:e1
+	{:
+		UnaryExpressionNotPlusMinus node 
+				= new UnaryExpressionNotPlusMinus(0,0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| BWN unaryExpression:e1 
+	{:
+		UnaryExpressionNotPlusMinus node 
+				= new UnaryExpressionNotPlusMinus(0,0,sym.BWN);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LN unaryExpression:e1
+	{:
+		UnaryExpressionNotPlusMinus node 
+				= new UnaryExpressionNotPlusMinus(0,0,sym.LN);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+postfixExpression ::= primary:e1
+	{:
+		PostfixExpression node = new PostfixExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| name:e1
+	{:
+		PostfixExpression node = new PostfixExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| postIncrementExpression:e1
+	{:
+		PostfixExpression node = new PostfixExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| postDecrementExpression:e1
+	{:
+		PostfixExpression node = new PostfixExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+postIncrementExpression ::= postfixExpression:e1 DP
+	{:
+		PostIncrementExpression node = new PostIncrementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+postDecrementExpression ::= postfixExpression:e1 DM
+	{:
+		PostDecrementExpression node = new PostDecrementExpression(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+castExpression ::= LP primitiveType:e1 dims:e2 RP unaryExpression:e3 
+	{:
+		CastExpression node = new CastExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| LP primitiveType:e1 RP unaryExpression:e2
+	{:
+		CastExpression node = new CastExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| LP expression:e1 RP unaryExpressionNotPlusMinus:e2
+	{:
+		CastExpression node = new CastExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| LP name:e1 dims:e2 RP unaryExpressionNotPlusMinus:e3
+	{:
+		CastExpression node = new CastExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+;
+
+primary ::= primaryNoNewArray:e1
+	{:
+		Primary node = new Primary(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| arrayCreationExpression:e1
+	{:
+		Primary node = new Primary(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+primaryNoNewArray ::= THIS 
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,1);
+		RESULT = node;
+	:}
+	| literal:e1
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,2);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| LP expression:e1 RP
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,3);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| classInstanceCreationExpression:e1
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,4);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| fieldAccess:e1
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,5);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| methodInvocation:e1
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,6);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| arrayAccess:e1
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,7);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| name:e1 DOT THIS
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,8);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| primitiveType:e1 DOT CLASS
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,9);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| name:e1 DOT CLASS
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,10);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| VOID DOT CLASS
+	{:
+		PrimaryNoNewArray node = new PrimaryNoNewArray(0,0,11);
+		RESULT = node;
+	:}
+;
+
+classInstanceCreationExpression ::= NEW classType:e1 LP argumentList:e2 RP
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(null,0,0,1);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| NEW classType:e1 LP RP
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(null,0,0,2);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| NEW classType:e1 LP argumentList:e2 RP classBody:e3
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(null,0,0,3);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| NEW classType:e1 LP RP classBody:e2
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(null,0,0,4);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| primary:e1 DOT NEW ID:e2 LP argumentList:e3 RP classBody:e4
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(e2.toString(),0,0,5);
+		node.addChild(e1);
+		node.addChild(e3);
+		node.addChild(e4);
+		RESULT = node;
+	:}
+	| primary:e1 DOT NEW ID:e2 LP argumentList:e3 RP
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(e2.toString(),0,0,6);
+		node.addChild(e1);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| primary:e1 DOT NEW ID:e2 LP RP classBody:e3
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(e2.toString(),0,0,7);
+		node.addChild(e1);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| primary:e1 DOT NEW ID:e2 LP RP
+	{:
+		ClassInstanceCreationExpression node 
+				= new ClassInstanceCreationExpression(e2.toString(),0,0,8);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+argumentList ::= expression:e1 
+	{:
+		ArgumentList node = new ArgumentList(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| argumentList:e1 COMMA expression:e2
+	{:
+		ArgumentList node = new ArgumentList(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+fieldAccess ::= primary:e1 DOT ID:e2
+	{:
+		FieldAccess node = new FieldAccess(e2.toString(),0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| SUPER DOT ID:e1
+	{:
+		FieldAccess node = new FieldAccess(e1.toString(),0,0);
+		RESULT = node;
+	:}
+;
+
+methodInvocation ::= name:e1 LP argumentList:e2 RP
+	{:
+		MethodInvocation node = new MethodInvocation(null,0,0,1,true);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| name:e1 LP RP
+	{:
+		MethodInvocation node = new MethodInvocation(null,0,0,1,false);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| primary:e1 DOT ID:e2 LP argumentList:e3 RP
+	{:
+		MethodInvocation node = new MethodInvocation(e2.toString(),0,0,2,true);
+		node.addChild(e1);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| primary:e1 DOT ID:e2 LP RP
+	{:
+		MethodInvocation node = new MethodInvocation(e2.toString(),0,0,2,false);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| SUPER DOT ID:e1 LP argumentList:e2 RP
+	{:
+		MethodInvocation node = new MethodInvocation(e1.toString(),0,0,3,true);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| SUPER DOT ID:e1 LP RP
+	{:
+		MethodInvocation node = new MethodInvocation(e1.toString(),0,0,3,false);
+		RESULT = node;
+	:}
+;
+
+arrayAccess ::= name:e1 LS expression:e2 RS
+	{:
+		ArrayAccess node = new ArrayAccess(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| primaryNoNewArray:e1 LS expression:e2 RS
+	{:
+		ArrayAccess node = new ArrayAccess(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+arrayCreationExpression ::= NEW primitiveType:e1 dimExprs:e2 dims:e3
+	{:
+		ArrayCreationExpression node = new ArrayCreationExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| NEW primitiveType:e1 dimExprs:e2
+	{:
+		ArrayCreationExpression node = new ArrayCreationExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| NEW classOrInterfaceType:e1 dimExprs:e2 dims:e3
+	{:
+		ArrayCreationExpression node = new ArrayCreationExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| NEW classOrInterfaceType:e1 dimExprs:e2
+	{:
+		ArrayCreationExpression node = new ArrayCreationExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+	| NEW primitiveType:e1 dims:e2 arrayInitializer:e3
+	{:
+		ArrayCreationExpression node = new ArrayCreationExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		node.addChild(e3);
+		RESULT = node;
+	:}
+	| NEW classOrInterfaceType:e1 dims:e2 arrayInitializer:e3
+	{:
+		ArrayCreationExpression node = new ArrayCreationExpression(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+dimExprs ::= dimExpr:e1
+	{:
+		DimExprs node = new DimExprs(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+	| dimExprs:e1 dimExpr:e2
+	{:
+		DimExprs node = new DimExprs(0,0);
+		node.addChild(e1);
+		node.addChild(e2);
+		RESULT = node;
+	:}
+;
+
+dimExpr ::= LS expression:e1 RS
+	{:
+		DimExpr node = new DimExpr(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+dims ::= LS RS 
+	{:
+		DimExpr node = new DimExpr(0,0);
+		RESULT = node;
+	:}
+	| dims:e1 LS RS
+	{:
+		DimExpr node = new DimExpr(0,0);
+		node.addChild(e1);
+		RESULT = node;
+	:}
+;
+
+literal ::= ILITERAL:e1
+	{:
+		Literal node = new Literal(e1.toString(),0,0,1);
+		RESULT = node;
+	:}
+	| RLITERAL:e1
+	{:
+		Literal node = new Literal(e1.toString(),0,0,2);
+		RESULT = node;
+	:}
+	| CLITERAL:e1
+	{:
+		Literal node = new Literal(e1.toString(),0,0,3);
+		RESULT = node;
+	:}
+	| SLITERAL:e1
+	{:
+		Literal node = new Literal(e1.toString(),0,0,4);
+		RESULT = node;
+	:}
+	| FALSE
+	{:
+		Literal node = new Literal("false",0,0,5);
+		RESULT = node;
+	:}
+	| TRUE
+	{:
+		Literal node = new Literal("true",0,0,6);
+		RESULT = node;
+	:}
+	| NULL
+	{:
+		Literal node = new Literal("null",0,0,7);
+		RESULT = node;
+	:}
+;
