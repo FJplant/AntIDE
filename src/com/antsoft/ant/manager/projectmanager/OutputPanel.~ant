@@ -1,0 +1,536 @@
+/*
+ * $Header: /AntIDE/source/ant/manager/projectmanager/OutputPanel.java 10    99-05-29 12:11p Strife $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 10 $
+ * 컴파일이나 실행시 출력을 나타낼 곳.
+ */
+package com.antsoft.ant.manager.projectmanager;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.text.*;
+import javax.swing.tree.*;
+import java.io.*;
+import java.util.StringTokenizer;
+
+import com.antsoft.ant.util.Constants;
+
+/**
+ *  class OuputPanel
+ *
+ *  @author Jinwoo Baek
+ */
+public class OutputPanel extends JPanel implements DocumentListener {
+  private BorderLayout borderLayout1 = new BorderLayout();
+  private JTree tree = null;
+
+  private Document doc = null;
+	private BufferedInputStream bin = null;
+	private FileInputStream fin = null;
+	private ProjectExplorer pe = null;
+
+  private MouseAdapter mouseHandler = null;
+
+//  private LineHighlighter highlighter = null;
+  private Object selObj = null;
+  private JViewport vp = null;
+  private Point last = null;
+
+  private int line = -1;
+	private int start = -1;
+  private int end = -1;
+
+  private DefaultTreeModel treeModel = null;
+  private DefaultMutableTreeNode rootNode = null;
+
+	/**
+	 *  Constructor
+	 */
+  public OutputPanel(ProjectExplorer pe) {
+		this.pe = pe;
+    try  {
+      jbInit();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void jbInit() throws Exception {
+    this.setLayout(borderLayout1);
+    doc = new PlainDocument();
+//    this.setPreferredSize(new Dimension(100, 50));
+		rootNode = new DefaultMutableTreeNode();
+		treeModel = new DefaultTreeModel(rootNode);
+		tree = new JTree(treeModel);
+    tree.setEditable(false);
+    tree.setRootVisible(false);
+    tree.putClientProperty("JTree.lineStyle", "Angled");
+		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    tree.setCellRenderer(new OutputPanelTreeCellRenderer());
+    add(tree);
+    doc.addDocumentListener(this);
+
+    mouseHandler = new MouseAdapter() {
+      public void mouseClicked(MouseEvent evt) {
+				if (evt.getModifiers() == InputEvent.BUTTON1_MASK) {
+					if (evt.getClickCount() == 2) {
+          	TreePath tp = tree.getSelectionPath();
+            if (tp != null) {
+          		DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode)tp.getLastPathComponent();
+              if (dmtn instanceof ErrorMsgTreeNode) {
+              	ErrorMsgTreeNode emtn = (ErrorMsgTreeNode)dmtn;
+                if (emtn.getType() != ErrorMsgTreeNode.CUSTOM) {
+									File file = new File(emtn.getFile());
+  	              int offset = emtn.getLine();
+									if ((file != null) && (pe != null) && (offset != -1)) {
+//                 	last = vp.getViewPosition();
+//										System.out.println(file.getParent());
+//                    System.out.println(file.getName());
+										pe.openDocument(file.getParent(), file.getName(), true);
+										pe.moveLine(offset - 1);
+									}
+								}
+              }
+						}
+					}
+				}
+			}
+		};
+    tree.addMouseListener(mouseHandler);
+
+    JScrollPane scroller = new JScrollPane(tree);
+    vp = scroller.getViewport();
+		this.add(scroller);
+  }
+
+  public void finalize() {
+  	borderLayout1 = null;
+    doc.removeDocumentListener(this);
+    tree.removeMouseListener(mouseHandler);
+    mouseHandler = null;
+    tree = null;
+    bin = null;
+    fin = null;
+  }
+
+  public void insertUpdate(DocumentEvent evt) {
+  	parseMessage();
+  }
+
+  public void removeUpdate(DocumentEvent evt) {
+    rootNode.removeAllChildren();
+    treeModel.reload();
+  }
+
+  public void changedUpdate(DocumentEvent evt) {
+  }
+
+  protected void parseMessage() {
+		String text = null;
+    Element root = doc.getDefaultRootElement();
+    Element elm = null;
+    try {
+	    if (root != null) {
+  	    for (int i = 0; i < root.getElementCount(); i++) {
+    	  	line = i;
+      	  elm = root.getElement(line);
+        	if (elm != null) {
+        		start = elm.getStartOffset();
+	          end = elm.getEndOffset();
+  	        text = doc.getText(start, end - start - 1);
+
+						if ((text != null) && (text.indexOf(":") > 0)) {
+	            StringBuffer head = new StringBuffer();
+  	          StringTokenizer st = new StringTokenizer(text);
+              st = new StringTokenizer(st.nextToken("\r"));
+//              st = new StringTokenizer(st.nextToken("\n"));
+              boolean error = false;
+    	        while (st.hasMoreTokens()) {
+              	String str = st.nextToken(":");
+                if (str.toLowerCase().endsWith(".java")) {
+                	head.append(str);
+                  error = true;
+                  break;
+                }
+                else {
+                	head.append(str);
+                  if (st.hasMoreTokens()) head.append(":");
+                }
+              }
+
+              // 에러 또는 경고 메시지
+              if (error) {
+              	// 에러 라인을 얻고
+              	try {
+                	int line = Integer.parseInt(st.nextToken(":"));
+                  String msg = st.nextToken(":");
+                  if (st.hasMoreTokens()) {
+                  	String s = st.nextToken(":");
+                    File file = new File(head.toString());
+                  	// Warning 인 경우
+   	                ErrorMsgTreeNode emtn =
+     	              	new ErrorMsgTreeNode(file.getAbsolutePath(),
+                       		line, s, ErrorMsgTreeNode.WARNING);
+       	            addMessage(emtn);
+                  }
+          				// Error 인 경우
+                  else {
+                  	File file = new File(head.toString());
+   	                ErrorMsgTreeNode emtn =
+     	              	new ErrorMsgTreeNode(file.getAbsolutePath(),
+                       		line, msg, ErrorMsgTreeNode.ERROR);
+       	            addMessage(emtn);
+                  }
+                } catch (NumberFormatException e) {
+                }
+              }
+/*
+              // 일반 에러 메시지
+              else {
+								ErrorMsgTreeNode emtn =
+                	new ErrorMsgTreeNode("", -1, head.toString(),
+                  		ErrorMsgTreeNode.CUSTOM);
+                addMessage(emtn);
+              }*/
+            }
+
+        		/*
+						if (text != null && (text.indexOf(":") > 0)) {
+							StringTokenizer st = new StringTokenizer(text);
+              st = new StringTokenizer(st.nextToken("\r"));
+							String filename = st.nextToken(":") + ":" + st.nextToken(":");
+							if (st.hasMoreTokens()) {
+								try {
+                	// Error 와 Warning 을 구분하라!!! -_-;;;;
+									int offset = Integer.parseInt(st.nextToken(":"));
+									//System.out.println("location : " + offset);
+									File file = new File(filename);
+                  String msg = st.nextToken(":");
+									if ((file != null) && (pe != null) && (offset != -1)) {
+                  	// Error 일 경우
+                  	if (!st.hasMoreTokens()) {
+	                  	String str = msg; //st.nextToken(":");
+  	                	// TODO : Tree에 집어 넣어야 겠쥐?
+    	                ErrorMsgTreeNode emtn =
+      	              	new ErrorMsgTreeNode(file.getAbsolutePath(),
+                        		offset, str, ErrorMsgTreeNode.ERROR);
+        	            addMessage(emtn);
+                    }
+                    // Warning 일 경우
+                    else {
+                    	ErrorMsgTreeNode wmtn =
+                      	new ErrorMsgTreeNode(file.getAbsolutePath(),
+                        		offset, st.nextToken(":"), ErrorMsgTreeNode.WARNING);
+                      addMessage(wmtn);
+                    }
+									}
+//				          else line = -1;
+								} catch (NumberFormatException e) {
+								}
+              }
+			      }
+            */
+					}
+        }
+      }
+    } catch (BadLocationException e) {
+    }
+  }
+
+  public void addMessage(ErrorMsgTreeNode node) {
+  	if (!node.getFile().equals("")) {
+	  	DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode(node.getFile());
+  	  DefaultMutableTreeNode parent = null;
+
+    	for (int i = 0; i < rootNode.getChildCount(); i++) {
+    		parent = (DefaultMutableTreeNode)rootNode.getChildAt(i);
+	      if ((parent.getUserObject() != null) &&
+        			parent.getUserObject().equals(dmtn.getUserObject())) break;
+  	    else parent = null;
+    	}
+
+	    if (parent != null) addObject(parent, node, false);
+  	  else addObject(addObject(rootNode, node.getFile(), false), node, false);
+    }
+    else
+    	addObject(rootNode, node, false);
+  }
+
+	/**
+	 *  Add child to the parent node with visibility
+	 *
+	 *  @param parent parent node
+	 *  @param child object to add to tree
+	 *  @param shouldBeVisible whether let node visible or not
+	 *  @return DefaultMutableTreeNode added tree node
+	 */
+	public DefaultMutableTreeNode addObject(DefaultMutableTreeNode parent,
+				Object child, boolean shouldBeVisible) {
+		DefaultMutableTreeNode childNode = null;
+    ErrorMsgTreeNode childEM = null;
+    boolean error = false;
+    if (child instanceof ErrorMsgTreeNode) {
+    	childEM = (ErrorMsgTreeNode)child;
+      error = true;
+    }
+    else {
+    	childNode = new DefaultMutableTreeNode(child);
+      error = false;
+    }
+
+		if (parent == null) {
+			parent = rootNode;
+		}
+
+    // 이미 있는 노드인지 확인 후
+		int index = 0;
+    boolean found = false;
+		for (int i = 0; i < parent.getChildCount(); i++) {
+    	DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode)parent.getChildAt(i);
+			if (!error && childNode.getUserObject().equals(dmtn.getUserObject())) {
+      	found = true;
+      	break;
+			}
+      else if (error && childEM.equals(dmtn)) {
+      	found = true;
+        break;
+      }
+      else {
+      	if (error) {
+        	if (dmtn instanceof ErrorMsgTreeNode) {
+	        	ErrorMsgTreeNode emtn = (ErrorMsgTreeNode)dmtn;
+		      	switch (childEM.getType()) {
+  		      case ErrorMsgTreeNode.ERROR:
+      	    	if (emtn.getType() == ErrorMsgTreeNode.ERROR) index++;
+        	    break;
+	          case ErrorMsgTreeNode.WARNING:
+  	        	if ((emtn.getType() == ErrorMsgTreeNode.ERROR) ||
+    	        		(emtn.getType() == ErrorMsgTreeNode.WARNING)) index++;
+      	    	break;
+        	  default:
+	    	  		index = parent.getChildCount();
+	          }
+  	      }
+          else index = parent.getChildCount();
+        }
+        else index = parent.getChildCount();
+      }
+		}
+
+    // 없으면 넣는다.
+		if (!found) {
+    	if (error) treeModel.insertNodeInto(childEM, parent, index);
+      else treeModel.insertNodeInto(childNode, parent, index);
+    }
+
+		// Make sure the user can see the lovely new node.
+		tree.expandPath(new TreePath(parent.getPath()));
+		if (shouldBeVisible) {
+			tree.scrollPathToVisible(new TreePath(childNode.getPath()));
+		}
+		return childNode;
+	}
+
+  public boolean isNoError() {
+  	if (rootNode.getChildCount() == 0) return true;
+    else return false;
+  }
+
+	/**
+	 *  출력을 나타내는 프로젝트 설정
+	 */
+	public void setPE(ProjectExplorer pe) {
+		this.pe = pe;
+	}
+
+	/**
+	 *  출력내용을 얻는다.
+	 */
+	public String getText() {
+  	String str = null;
+  	try {
+			str = doc.getText(0, doc.getLength());
+    } catch (BadLocationException e) {
+    	str = null;
+    }
+    return str;
+	}
+
+	/**
+	 *  출력을 나타낸다.
+	 *
+	 *  @param text 나타낼 문자열
+	 */
+  public void setText(String text) {
+  	try {
+	    doc.insertString(doc.getLength(), text, null);
+    } catch (BadLocationException e) {
+    }
+  }
+
+	/**
+	 *  출력 내용을 덧붙여 추가한다.
+	 */
+  public void appendText(String text){
+  	try {
+	    doc.insertString(doc.getLength(), text, null);
+    } catch (BadLocationException e) {
+    }
+  }
+
+	/**
+	 *  출력화면을 깨끗이한다.
+	 */
+  public void clear() {
+  	try {
+	    doc.remove(0, doc.getLength());
+      rootNode.removeAllChildren();
+      treeModel.reload();
+    } catch (BadLocationException e) {
+    }
+  }
+
+/*
+//	public void useInputStream(BufferedInputStream in) {
+	public void useInputStream(InputStream in) {
+//		this.bin = in;
+//		avail = true;
+        InputStreamReader isr = new InputStreamReader(in);
+        final LineNumberReader lnr = new LineNumberReader(isr);
+
+		Thread t = new Thread(new Runnable() {
+			public void run() {
+				byte buff[] = new byte[4096];
+				int nch;
+
+				while(!processExited) {
+					try {
+                        setText(lnr.readLine());
+
+					} catch (IOException e) {}
+//					} catch (InterruptedException e) {
+//					}
+				}
+
+
+                /*
+				while(avail && !processExited) {
+					try {
+						while(bin.available() > 0) {
+							while((nch = bin.read(buff, 0, buff.length)) > 4096)
+								setText(new String(buff, 0, nch));
+						}
+						Thread.sleep(500);
+					} catch (IOException e) {
+					} catch (InterruptedException e) {
+					}
+				}
+            * /
+			}
+		});
+		t.start();
+	}
+
+	public void useErrorStream(FileInputStream in) {
+		byte buff[] = new byte[4096];
+		int nch;
+		try {
+			while(in.available() > 0) {
+				while((nch = in.read(buff, 0, buff.length)) > 4096)
+					setText(new String(buff, 0, nch));
+			}
+		} catch (IOException e) {
+		}
+	}
+/*
+  public void updateHighlighter(int line) {
+  	if (highlighter == null) highlighter = new LineHighlighter();
+    if ((highlighter != null) && (start >= 0) && (end >= 0)) {
+    	try {
+				highlighter.setLineNum(line);
+//  	    Document doc = output.getDocument();
+//    	  Element root = doc.getDefaultRootElement();
+//      	Element elm = root.getElement(line);
+//	      int start = elm.getStartOffset();
+//  	    int end = elm.getEndOffset();
+/*
+        output.setCaretPosition(start);
+				Rectangle rect = output.modelToView(start);
+				int coord_y = vp.getExtentSize().height / 2;
+				coord_y = rect.y - coord_y;
+				if (coord_y < 0) coord_y = 0;
+				vp.setViewPosition(new Point(0, coord_y));
+* /
+    	  if(selObj == null) selObj = output.getHighlighter().addHighlight(0, 0, highlighter);
+      	else output.getHighlighter().changeHighlight(selObj, start, end);
+//  	    vp.repaint();
+      } catch (BadLocationException e) {
+      }
+    }
+  }
+/*
+  public void clearHighlighter(){
+    if(selObj != null){
+      output.getHighlighter().removeHighlight(selObj);
+      selObj = null;
+//      output.repaint();
+    }
+  }
+
+  /**
+   *  class LineHighlighter
+   * /
+	class LineHighlighter implements Highlighter.HighlightPainter {
+    private Color highLightC;
+    private int lineNo = -1;
+    private Rectangle mRect;
+    private int mHeight;
+
+    public LineHighlighter(){
+      highLightC = Color.orange;
+    }
+
+    public void setLineNum(int lineNo){
+      this.lineNo = lineNo;
+    }
+
+    public int getLineNum(){
+      return lineNo;
+    }
+
+    public int getYpos(int line){
+      if(mRect==null) return -1;
+      else return mRect.y + mHeight * line + mHeight/3;
+    }
+
+		public void paint(Graphics g, int p0, int p1, Shape bounds,	JTextComponent textComponent)	{
+			Document doc = output.getDocument();
+			FontMetrics metrics = g.getFontMetrics();
+			Rectangle rect = (Rectangle)bounds;
+			int height = metrics.getHeight();
+			int x = rect.x;
+			int y = rect.y + height * lineNo;
+			g.setColor(highLightC);
+
+      mRect = rect;
+      mHeight = height;
+
+      if(lineNo != -1) g.fillRect(x, y, output.getWidth(), height);
+		}
+
+    public void finalize() {
+    	highLightC = null;
+      mRect = null;
+    }
+	}
+*/
+}
+

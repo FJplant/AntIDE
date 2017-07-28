@@ -1,0 +1,393 @@
+/*
+ * $Header: /AntIDE/source/ant/manager/projectmanager/Project.java 12    99-06-02 4:33p Strife $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 12 $
+ */
+package com.antsoft.ant.manager.projectmanager;
+
+import java.util.Vector;
+import java.io.*;
+import javax.swing.tree.*;
+
+import com.antsoft.ant.property.*;
+import com.antsoft.ant.property.projectproperty.*;
+import com.antsoft.ant.main.Main;
+import com.antsoft.ant.pool.librarypool.*;
+import com.antsoft.ant.codecontext.CodeContext;
+import com.antsoft.ant.pool.sourcepool.SourceEntry;
+import com.antsoft.ant.util.DayInfo;
+import com.antsoft.ant.util.Constants;
+import com.antsoft.ant.main.Main;
+
+/**
+ *  하나의 프로젝트를 관리하는 오브젝트
+ *
+ *  @author Baek, Jin-woo
+ *  @author Kim sang kyun
+ */
+public class Project implements Serializable{
+  /**
+   *  Project Name
+   */
+  private String name = null;
+
+  /**
+   *  Project's Main Path
+   */
+  private String path = null;
+
+  /**
+   *  Files in Project
+   */
+  private Vector files = new Vector();
+
+	/**
+	 *  Tree Model for ProjectPanel
+	 */
+	private DefaultTreeModel treeModel = null;
+
+  DefaultPathModel pathModel = new DefaultPathModel();
+
+  private CompilerOptionModel compilerModel = new CompilerOptionModel();
+  private InterpreterOptionModel interpreterModel = new InterpreterOptionModel();
+
+  File fl = null;
+  boolean isModified = false;
+
+  private long lastID = 0;
+
+  private String comment = "";
+  private String lastSavedTime = null;
+  private String createdTime = null;
+
+  public Project() {
+    name = "Files";
+		path = "";
+
+    // default path model 로 setting
+    this.pathModel = Main.property.getPathModel();
+		treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(name));
+    createdTime = DayInfo.getFormattedDayStr();
+  }
+
+  /**
+   *  Constructor. 해당 프로젝트 파일을 열어서
+   *  내부 데이터를 채운다.
+   *
+   *  @param name Project name
+	 *  @param path Project file path
+   */
+  public Project(String name, String path) {
+    this.name = name;
+    this.path = path;
+
+    // default path model 로 setting
+    IdeProperty p= (IdeProperty)IdePropertyManager.loadProperty();
+    this.pathModel = p.getPathModel();
+
+		// for ProjectPanel's tree
+		treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(this.name));
+
+    createdTime = DayInfo.getFormattedDayStr();
+  }
+
+  public void setPath(String newPath){
+    this.path = newPath;
+  }
+
+  /**
+   * librarypool의 data를 현재의 project 내용으로 초기화한다
+   */
+  public void initLibraryPool(){
+    Vector datas = pathModel.getLibraryPoolDatas();
+    pathModel.updateClassLoader();
+
+    CodeContext.libraryPool.removeAllProjectLibs(name);
+
+    for(int i=0; i<datas.size(); i++){
+      CodeContext.libraryPool.addProjectLibraryInfo(name, (LibraryInfo)datas.elementAt(i));
+    }
+  }
+
+  public void setPathModel(DefaultPathModel model){
+    pathModel = model;
+    isModified = true;
+  }
+
+  /**
+   * 프로젝트 오픈할때 호출된다
+   */
+  public void syncEntrysWithRealFile(){
+     for(int i=0; i<files.size(); i++){
+       ProjectFileEntry entry = (ProjectFileEntry)files.elementAt(i);
+
+       if(entry.isExternallyChanged()){
+         SourceEntry.syncWithRealFile(entry.getPath(), entry.getName());
+       }
+       entry.syncLastModifiedTimeWithRealFile();
+     }
+  }
+
+	/**
+	 *  ProjectPanel의 Tree정보를 얻는다.
+	 *
+	 *  @return DefaultTreeModel tree구조 정보
+	 */
+	public DefaultTreeModel getTreeModel() {
+		return this.treeModel;
+	}
+
+	/**
+	 *  TreeModel을 설정한다.
+	 *
+	 *  @param treeModel 설정할 tree model
+	 */
+	public void setTreeModel(DefaultTreeModel treeModel) {
+		this.treeModel = treeModel;
+    isModified = true;
+	}
+
+  /**
+   *  현 프로젝트의 컴파일 옵션을 얻는다.
+   */
+  public CompilerOptionModel getCompilerModel() {
+  	return compilerModel;
+  }
+
+  public void setCompilerModel(CompilerOptionModel compilerModel) {
+  	this.compilerModel = compilerModel;
+    isModified = true;
+  }
+
+  /**
+   *  현 프로젝트의 실행 옵션을 얻는다.
+   */
+  public InterpreterOptionModel getInterpreterModel() {
+  	return interpreterModel;
+  }
+
+  public void setInterpreterModel(InterpreterOptionModel interpreterModel) {
+  	this.interpreterModel = interpreterModel;
+    isModified = true;
+  }
+
+  public DefaultPathModel getPathModel(){
+    return this.pathModel;
+  }
+
+  public String getProjectName() {
+    return name;
+  }
+
+  public void setProjectName(String name) {
+  	this.name = name;
+  }
+
+  public ProjectFileEntry addFile(String pathName, String fileName) {
+    ProjectFileEntry file = null;
+    if (fileName != null && pathName != null) {
+    	if (findFile(pathName, fileName) == -1) {
+	    	File f = new File(pathName, fileName);
+  	    file = new ProjectFileEntry(f.getParent(), f.getName());
+    	  files.addElement(file);
+      	isModified = true;
+      }
+    }
+    return file;
+  }
+
+  public ProjectFileEntry addFile(ProjectFileEntry file) {
+    if (file != null) {
+    	if (findFile(file) == -1) {
+	      files.addElement(file);
+  	    isModified = true;
+      }
+    }
+    return file;
+  }
+
+  public ProjectFileEntry getFileEntry(String pathName, String fileName) {
+
+    int index = findFile(pathName, fileName);
+    if (index != -1) return (ProjectFileEntry)files.elementAt(index);
+    return null;
+  }
+
+  public void removeFile(String pathName, String fileName) {
+    int index = findFile(pathName, fileName);
+    if (index != -1) {
+      files.removeElementAt(index);
+      isModified = true;
+    }
+  }
+
+  public void removeFile(ProjectFileEntry file) {
+    int index = findFile(file);
+    if (index != -1) {
+      files.removeElementAt(index);
+      isModified = true;
+    }
+  }
+
+  public void setLastSavedTime(){
+    lastSavedTime = DayInfo.getFormattedDayStr();
+  }
+
+  public String getLastSavedTime(){
+    return lastSavedTime;
+  }
+
+  private int findFile(String pathName, String fileName) {
+    for (int i = 0; i < files.size(); i++) {
+      ProjectFileEntry file = (ProjectFileEntry)files.elementAt(i);
+      File src = new File(pathName, fileName);
+      File dest = new File(file.getPath(), file.getName());
+      if(src.equals(dest)) return i;
+    }
+    return -1;
+  }
+
+  private int findFile(ProjectFileEntry file) {
+    for (int i = 0; i < files.size(); i++) {
+      ProjectFileEntry f = (ProjectFileEntry)files.elementAt(i);
+      if (f.equals(file)) return i;
+    }
+    return -1;
+  }
+
+  public boolean isModified() {
+    return isModified;
+  }
+
+  public String getPath() {
+    return path;
+  }
+
+  public Vector getFiles() {
+    return files;
+  }
+
+  /**
+   *  Tree 구조를 프로젝트 파일 텍스트로 나타낸다.
+   */
+  public String treeModelToString(DefaultMutableTreeNode node) {
+  	StringBuffer out = new StringBuffer();
+//  	DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)treeModel.getRoot();
+		if (node instanceof ProjectPanelTreeNode) {
+    	ProjectPanelTreeNode pptn = (ProjectPanelTreeNode)node;
+      if (pptn.isFolder()) {
+       	out.append("Folder=" + pptn.getID() + "#" + (String)pptn.getUserObject() +
+          							"#" + pptn.getParentID() + Constants.lineSeparator);
+        for (int i = 0; i < pptn.getChildCount(); i++) {
+        	out.append(treeModelToString((DefaultMutableTreeNode)pptn.getChildAt(i)));
+        }
+      }
+      else if (pptn.isFile()) {
+      	ProjectFileEntry pfe = (ProjectFileEntry)pptn.getObject();
+      	out.append("File=" + pfe.getID() + "#" + pfe.getFullPathName() +
+        							"#" + pfe.getParent() + Constants.lineSeparator);
+      }
+    }
+    else {
+    	for (int i = 0; i < node.getChildCount(); i++) {
+      	out.append(treeModelToString((DefaultMutableTreeNode)node.getChildAt(i)));
+      }
+    }
+    return out.toString();
+  }
+
+  /**
+   *  Item 들을 가지고 트리를 생성한다.
+   */
+  public void constructTree(Vector nodes) {
+  }
+
+  /**
+   *  프로젝트 파일에 저장되는 텍스트 형태로 나타낸다.
+   */
+  public String toString() {
+  	StringBuffer out = new StringBuffer();
+
+    // 프로젝트 이름
+    out.append("ProjectName=" + name + Constants.lineSeparator);
+    // 프로젝트 설명
+    out.append("Comment=" + comment + Constants.lineSeparator);
+    // 마지막 파일 ID
+    out.append("LastID=" + lastID + Constants.lineSeparator);
+
+    // 프로젝트에 속한 파일들
+    out.append(treeModelToString((DefaultMutableTreeNode)treeModel.getRoot()));
+/*
+    for (int i = 0; i < files.size(); i++) {
+    	ProjectFileEntry pfe = (ProjectFileEntry)files.elementAt(i);
+      if (pfe != null) out.append(pfe);
+    }
+*/
+    // 나머지 옵션들
+    out.append(pathModel);
+    out.append(compilerModel);
+    out.append(interpreterModel);
+    return out.toString();
+  }
+
+  public boolean equals(Project prj) {
+		if (name.equals(prj.getProjectName()) && path.equals(prj.getPath())) return true;
+		return false;
+  }
+
+  public void setComment(String comment){
+    this.comment = comment;
+  }
+
+  public String getComment(){
+    return comment;
+  }
+
+  public String getCreatedTime(){
+    return this.createdTime;
+  }
+
+  public long getLastID() {
+  	return lastID;
+  }
+
+  public void setLastID(long lastID) {
+  	this.lastID = lastID;
+  }
+
+  private static String strip( String Stripped, String ToStrip ) {
+  	String stringStripped = new String();
+  	String stringToStrip = new String();
+  	int index;
+
+  	stringStripped = Stripped; stringToStrip = ToStrip;
+
+  	// 짜를 부분이 있다면...
+  	if((index = stringStripped.indexOf(stringToStrip)) != -1) {
+  		String temp1 = stringStripped.substring(0, index);
+  		String temp2 = stringStripped.substring(index + stringToStrip.length());
+  		return (temp1 + temp2);
+  	}	else return stringStripped;
+  }
+
+  private String getFileName(String fullname) {
+    if (fullname != null) {
+      int idx = fullname.lastIndexOf(';');
+      if (idx != -1) return fullname.substring(idx + 1, fullname.length());
+    }
+    return null;
+  }
+
+  private String getPathName(String fullname) {
+    if (fullname != null) {
+      int idx = fullname.lastIndexOf(';');
+      if (idx != -1) return fullname.substring(0, idx);
+    }
+    return null;
+  }
+}
