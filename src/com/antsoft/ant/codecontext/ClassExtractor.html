@@ -1,0 +1,168 @@
+<html>
+<head>
+<title>C:\Work\ant\source\com\antsoft\ant\codecontext\ClassExtractor.java</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<pre>
+package com.antsoft.ant.codecontext;
+
+<font color="#3333ff">import</font> java.util.*;
+<font color="#3333ff">import</font> java.io.*;
+<font color="#3333ff">import</font> javax.swing.text.Document;
+
+<font color="#009900">/*
+ @author Kim, SungHoon.
+ */</font>
+<font color="#3333ff">public</font> <font color="#3333ff">class</font> ClassExtractor {
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> Lexer lexer;
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> <font color="#3333ff">int</font> token;
+
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> String packageName = null;
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> Vector classes = null;
+
+  <font color="#009900">// Constructor.</font>
+  <font color="#3333ff">public</font> ClassExtractor(File file) {
+    lexer = <font color="#3333ff">new</font> Lexer(file);
+    <font color="#009900">//Lexer.setData(file);</font>
+    packageName = <font color="#ff0000">&quot;dummypack&quot;</font>;
+    classes = null;
+  }
+
+  <font color="#009900">/*
+  public ClassExtractor(InputStream in) {
+    lexer = new Lexer(in);
+    packageName = dummypack;
+  }
+
+  public ClassExtractor(Document doc) {
+    lexer = new Lexer(doc);
+    packageName = dummypack;
+  }
+  */</font>
+
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> String name() {
+    StringBuffer buf = <font color="#3333ff">new</font> StringBuffer(<font color="#ff0000">&quot;&quot;</font>);
+    <font color="#3333ff">boolean</font> loop = false;
+
+    <font color="#3333ff">do</font> {
+      <font color="#3333ff">if</font> (token == Sym.ID) {
+        buf.append(Lexer.getValue());
+        token = Lexer.nextToken();
+        <font color="#3333ff">if</font> (token == Sym.DOT) {
+          buf.append(<font color="#ff0000">&quot;.&quot;</font>);
+          token = Lexer.nextToken();
+          loop = true;
+        }
+        <font color="#3333ff">else</font> loop = false;
+      }
+      <font color="#3333ff">else</font> loop = false;
+    } <font color="#3333ff">while</font> (loop);
+
+    <font color="#3333ff">return</font> buf.toString();
+  }
+
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> <font color="#3333ff">void</font> normalStatement() {
+    <font color="#3333ff">while</font> (token != Sym.RB &amp;&amp; token != Sym.EOF) {
+      <font color="#3333ff">if</font> (token == Sym.LB) {
+        token = Lexer.nextToken();
+        normalStatement();
+      }
+      <font color="#3333ff">else</font> token = Lexer.nextToken();
+    }
+    token = Lexer.nextToken();
+  }
+
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> <font color="#3333ff">void</font> classBlock() {
+    String key = null;
+
+    <font color="#3333ff">while</font> (token == Sym.MODIFIER || token == Sym.MODIFIER2) {
+      token = Lexer.nextToken();
+    }
+
+    <font color="#3333ff">while</font> (token != Sym.CLASS &amp;&amp; token != Sym.INTERFACE &amp;&amp; token != Sym.EOF) token = Lexer.nextToken();
+    <font color="#3333ff">if</font> (token == Sym.EOF) <font color="#3333ff">return</font>;
+
+    token = Lexer.nextToken();
+    <font color="#3333ff">while</font> (token != Sym.ID &amp;&amp; token != Sym.EOF) token = Lexer.nextToken();
+    <font color="#3333ff">if</font> (token == Sym.EOF) <font color="#3333ff">return</font>;
+
+    <font color="#3333ff">if</font> (classes == null) classes = <font color="#3333ff">new</font> Vector(1,1);
+    classes.addElement(Lexer.getValue());
+
+    token = Lexer.nextToken();
+    <font color="#3333ff">if</font> (token == Sym.EXTENDS) {
+      token = Lexer.nextToken();
+      name();
+    }
+
+    <font color="#3333ff">if</font> (token == Sym.IMPLEMENTS) {
+      token = Lexer.nextToken();
+      <font color="#3333ff">while</font> (true) {
+        name();
+        <font color="#3333ff">if</font> (token == Sym.COMMA) token = Lexer.nextToken();
+        <font color="#3333ff">else</font> <font color="#3333ff">break</font>;
+      }
+    }
+
+    <font color="#3333ff">while</font> (token != Sym.LB &amp;&amp; token != Sym.EOF) token = Lexer.nextToken();
+    <font color="#3333ff">if</font> (token == Sym.EOF) {
+      <font color="#3333ff">return</font>;
+    }
+
+    token = Lexer.nextToken();
+    normalStatement();
+    token = Lexer.nextToken();
+  }
+
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> <font color="#3333ff">void</font> importStatement() {
+    <font color="#3333ff">if</font> (token == Sym.IMPORT) {
+      Lexer.newLine = true;
+      token = Lexer.nextToken();
+      <font color="#3333ff">while</font> ( (token != Sym.EOL) &amp;&amp; (token != Sym.EOF) ) {
+        token = Lexer.nextToken();
+      }
+    }
+
+    Lexer.newLine = false;
+    token = Lexer.nextToken();
+  }
+
+  <font color="#3333ff">private</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> <font color="#3333ff">void</font> packageStatement() {
+    <font color="#3333ff">if</font> (token == Sym.PACKAGE) {
+      Lexer.newLine = true;
+      StringBuffer buf = <font color="#3333ff">new</font> StringBuffer();
+      token = Lexer.nextToken();
+      <font color="#3333ff">while</font> ( (token  != Sym.EOL) &amp;&amp; (token != Sym.EOF) ) {
+        <font color="#3333ff">if</font> (token == Sym.ID) buf.append(Lexer.getValue());
+        <font color="#3333ff">else</font> <font color="#3333ff">if</font> (token == Sym.DOT) buf.append(<font color="#ff0000">&quot;.&quot;</font>);
+        token = Lexer.nextToken();
+      }
+
+      packageName = buf.toString();
+    }
+
+    Lexer.newLine = false;
+    token = Lexer.nextToken();
+  }
+
+  <font color="#3333ff">public</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> <font color="#3333ff">void</font> doParse() {
+    token = Lexer.nextToken();
+    <font color="#3333ff">if</font> (token == Sym.EOF) <font color="#3333ff">return</font>;
+
+    <font color="#3333ff">if</font> (token == Sym.PACKAGE) packageStatement();
+    <font color="#3333ff">while</font> (token == Sym.IMPORT) importStatement();
+
+    <font color="#3333ff">while</font> (token != Sym.EOF) classBlock();
+  }
+
+  <font color="#3333ff">public</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> String getPackageName() {
+    <font color="#3333ff">return</font> packageName;
+  }
+
+  <font color="#3333ff">public</font> <font color="#3333ff">static</font> <font color="#3333ff">final</font> Vector getClasses() {
+    <font color="#3333ff">return</font> classes;
+  }
+}
+</pre>
+</body>
+</html>
