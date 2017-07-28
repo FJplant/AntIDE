@@ -1,0 +1,148 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: /AntIDE/source/ant/debugger/DebugCommandPanel.java 2     99-05-16 11:42p Multipia $
+ * $Revision: 2 $
+ * $History: DebugCommandPanel.java $
+ * 
+ * *****************  Version 2  *****************
+ * User: Multipia     Date: 99-05-16   Time: 11:42p
+ * Updated in $/AntIDE/source/ant/debugger
+ * 
+ * *****************  Version 1  *****************
+ * User: Multipia     Date: 99-05-11   Time: 6:48p
+ * Created in $/AntIDE/source/ant/debugger
+ * Initial Version.
+ */
+
+package com.antsoft.ant.debugger;
+
+import java.awt.*;
+import javax.swing.*;
+import java.awt.event.*;
+import java.util.StringTokenizer;
+
+public class DebuggerCommandPanel extends JPanel
+                                implements ActionListener {
+  Debugger debugger = null;
+  BorderLayout borderLayout1 = new BorderLayout();
+  JPanel commandP;
+  JLabel running;
+  JButton threadsBtn, threadBtn, suspendBtn, resumeBtn, whereBtn, whereiBtn;
+  JButton threadGroupsBtn, threadGroupBtn, printBtn, dumpBtn, classesBtn, localsBtn;
+  JButton methodsBtn, stopInBtn, stopAtBtn, upBtn, downBtn, clearBtn;
+  JButton stepintoBtn, stepupBtn, stepiBtn, nextBtn, contBtn, catchBtn, ignoreBtn;
+  JButton listBtn, useBtn, memoryBtn, gcBtn, loadBtn, runBtn, exitBtn;
+
+  public DebuggerCommandPanel(Debugger debugger) {
+    try  {
+      jbInit();
+      this.debugger = debugger;
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void jbInit() throws Exception {
+    this.setLayout(borderLayout1);
+    commandP = new JPanel(new GridLayout( 0, 2 ));
+
+    loadBtn = new JButton( "load" );
+    runBtn = new JButton( "run" );
+    useBtn = new JButton( "use" );
+
+    threadsBtn = new JButton( "threads" );
+    threadBtn = new JButton( "thread" );
+    whereBtn = new JButton( "where" );
+    whereiBtn = new JButton( "wherei" );
+    threadGroupsBtn = new JButton( "threadgroups" );
+    threadGroupBtn = new JButton( "threadgroup" );
+    printBtn = new JButton( "print" );
+    suspendBtn = new JButton( "suspend" );
+    resumeBtn = new JButton( "resume" );
+    classesBtn = new JButton( "classes" );
+    localsBtn = new JButton( "locals" );
+
+    stepintoBtn = new JButton( "step into" );
+    stepupBtn = new JButton( "step up" );
+    nextBtn = new JButton( "next" );
+    contBtn = new JButton( "cont" );
+
+    classesBtn.addActionListener( this );
+    stepintoBtn.addActionListener( this );
+    stepupBtn.addActionListener( this );
+    nextBtn.addActionListener( this );
+    contBtn.addActionListener( this );
+    localsBtn.addActionListener( this );
+
+    commandP.add( loadBtn );
+    commandP.add( useBtn );
+    commandP.add( runBtn );
+    commandP.add( classesBtn );
+    commandP.add( suspendBtn );
+    commandP.add( resumeBtn );
+    commandP.add( stepintoBtn );
+    commandP.add( stepupBtn );
+    commandP.add( nextBtn );
+    commandP.add( contBtn );
+    commandP.add( localsBtn );
+
+    add( commandP, BorderLayout.CENTER );
+
+    // add running label
+    running = new JLabel("stopped");
+    add( running, BorderLayout.NORTH );
+  }
+
+  public void setRunning( boolean b ) {
+    if ( b )
+      running.setText( "Running" );
+    else
+      running.setText( "Stopped" );
+
+    // 실행중일때에는 Button을 Disable 한다.
+    nextBtn.setEnabled(!b);
+    contBtn.setEnabled(!b);
+    stepintoBtn.setEnabled(!b);
+    stepupBtn.setEnabled(!b);
+  }
+
+  public void actionPerformed( ActionEvent e ) {
+    try {
+      //    if ( e.getSource() == suspendBtn ) {
+      //      debugger.suspend();
+      //    } else if ( e.getSource() == resumeBtn ) {
+      //      debugger.resume();
+      if ( e.getSource() == stepintoBtn ) {
+        String str = "";
+        StringTokenizer tn = new StringTokenizer( str, " :\t\n\r");
+        setRunning( true );
+        debugger.step(tn);
+      } else if ( e.getSource() == stepupBtn ) {
+        String str = "up";
+        StringTokenizer tn = new StringTokenizer( str, " :\t\n\r");
+        setRunning( true );
+        debugger.step(tn);
+      } else if ( e.getSource() == nextBtn ) {
+        setRunning( true );
+        debugger.next();
+      } else if ( e.getSource() == contBtn ) {
+        setRunning( true );
+        debugger.cont();
+      } else if ( e.getSource() == classesBtn ) {
+        debugger.classes();
+      } else if ( e.getSource() == localsBtn ) {
+        debugger.locals();
+      }
+
+    } catch (Exception ex ) {
+    }
+  }
+}
+

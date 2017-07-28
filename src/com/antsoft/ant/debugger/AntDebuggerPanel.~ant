@@ -1,0 +1,89 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: $
+ * $Revision: $
+ * $History: $
+ */
+package com.antsoft.ant.debugger;
+
+import java.awt.*;
+import javax.swing.*;
+
+/**
+ * Ant Debugger의 Main Frame 역할을 하는 Class입니다.
+ *
+ * @author Kwon, Young Mo
+ */
+class AntDebuggerPanel extends JPanel {
+  private DebuggerProxy debuggerProxy;
+
+  private LoadedClassesPanel loadedClassesPanel;
+  private MethodPanel methodPanel;
+  private TabbedSourceListPanel tabbedSourceListPanel;
+  // 우선에는 SourcePanel을 사용
+  private SourcePanel sourcePanel;
+  private LocalVariablesPanel localVariablesPanel;
+  private ThreadCallStackFrame threadCallStackFrame;
+  private DebuggerStatusBar debuggerStatusBar;
+  private WatchPanel watchPanel;
+  private BreakpointPanel breakpointPanel;
+
+  /**
+   * Only classes in same package can instaciate me
+   */
+  AntDebuggerPanel(DebuggerProxy proxy) {
+    debuggerProxy = proxy;
+    methodPanel = new MethodPanel(proxy);
+    sourcePanel = new SourcePanel(proxy);
+    loadedClassesPanel = new LoadedClassesPanel(proxy, sourcePanel, methodPanel);
+    localVariablesPanel = new LocalVariablesPanel();
+    watchPanel = new WatchPanel();
+    debuggerStatusBar = new DebuggerStatusBar();
+    threadCallStackFrame = new ThreadCallStackFrame();
+    breakpointPanel = new BreakpointPanel();
+
+    uiInit();
+    setVisible(true);
+  }
+
+  void uiInit() {
+    setLayout(new BorderLayout());
+    // ClassPanel과 MethodPanel을 가르는 SplitPane 설정
+    JSplitPane classMethodPane = new JSplitPane( JSplitPane.VERTICAL_SPLIT, loadedClassesPanel, methodPanel );
+    classMethodPane.setDividerSize(4);
+    classMethodPane.setOneTouchExpandable(true);
+
+    // Class, Method Panel과 Source Panel을 가르는 SplitPane 설정
+    JSplitPane classSourcePane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, classMethodPane, sourcePanel );
+    classSourcePane.setDividerSize(4);
+    classSourcePane.setOneTouchExpandable(true);
+
+    // LocalVariablesPanel과 WatchPanel을 가르는 SplitPane 설정
+    JSplitPane localWatchPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, localVariablesPanel, watchPanel );
+    localWatchPane.setDividerSize(4);
+    localWatchPane.setOneTouchExpandable(true);
+
+    // 두개의 SplitPane을 가르는 것을 설정
+    JSplitPane listWatchPane = new JSplitPane( JSplitPane.VERTICAL_SPLIT, classSourcePane, localWatchPane );
+    listWatchPane.setDividerSize(4);
+    listWatchPane.setOneTouchExpandable(true);
+
+    add(listWatchPane, BorderLayout.CENTER);
+    add(debuggerStatusBar, BorderLayout.SOUTH);
+  }
+
+  public void updateViews() throws Exception {
+    loadedClassesPanel.update();
+    //listSource();
+    //threads();
+    //classes();
+    //listBreakpoints();
+    //where(false);
+  }
+}

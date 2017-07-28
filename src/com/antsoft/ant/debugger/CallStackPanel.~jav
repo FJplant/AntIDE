@@ -1,0 +1,51 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: /AntIDE/source/ant/debugger/CallStackPanel.java 2     99-05-16 11:42p Multipia $
+ * $Revision: 2 $
+ * $History: CallStackPanel.java $
+ * 
+ * *****************  Version 2  *****************
+ * User: Multipia     Date: 99-05-16   Time: 11:42p
+ * Updated in $/AntIDE/source/ant/debugger
+ * 
+ * *****************  Version 1  *****************
+ * User: Multipia     Date: 99-05-11   Time: 6:48p
+ * Created in $/AntIDE/source/ant/debugger
+ * Initial Version.
+ */
+
+package com.antsoft.ant.debugger;
+
+import java.awt.*;
+import java.util.Vector;
+import javax.swing.*;
+
+public class CallStackPanel extends JPanel {
+  BorderLayout borderLayout1 = new BorderLayout();
+  JList classes = new JList();
+  public CallStackPanel() {
+    try  {
+      jbInit();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void jbInit() throws Exception {
+    this.setLayout(borderLayout1);
+    add(new JScrollPane(classes), BorderLayout.CENTER);
+    setPreferredSize( new Dimension( 300, 200 ) );
+  }
+
+  public void setCallStack( Vector list ) {
+    classes.setListData( list );
+  }
+}
+

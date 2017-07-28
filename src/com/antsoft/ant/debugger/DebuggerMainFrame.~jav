@@ -1,0 +1,75 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: $
+ * $Revision: $
+ * $History: $
+ */
+package com.antsoft.ant.debugger;
+
+import java.awt.*;
+import javax.swing.*;
+
+/**
+ * Ant Debugger의 Main Frame 역할을 하는 Class입니다.
+ *
+ * @author Kwon, Young Mo
+ */
+class DebuggerMainFrame extends JFrame {
+  private LoadedClassesPanel loadedClassesPanel;
+  private MethodPanel methodPanel;
+  private TabbedSourceListPanel tabbedSourceListPanel;
+  // 우선에는 SourcePanel을 사용
+  private SourcePanel sourcePanel;
+  private LocalVariablesPanel localVariablesPanel;
+  private ThreadsPanel threadPanel;
+  private DebuggerStatusBar debuggerStatusBar;
+  private WatchPanel watchPanel;
+  private BreakpointPanel breakpointPanel;
+
+  /**
+   * Only classes in same package can instaciate me
+   */
+  DebuggerMainFrame() {
+    super( "Ant Debugger 1.0" );
+    loadedClassesPanel = new LoadedClassesPanel();
+    methodPanel = new MethodPanel();
+    sourcePanel = new SourcePanel();
+    localVariablesPanel = new LocalVariablesPanel();
+    watchPanel = new WatchPanel();
+    debuggerStatusBar = new DebuggerStatusBar();
+    threadPanel = new ThreadsPanel();
+    breakpointPanel = new BreakpointPanel();
+
+    uiInit();
+    pack();
+    setVisible(true);
+  }
+
+  void uiInit() {
+    getContentPane().setLayout(new BorderLayout());
+    JSplitPane classMethodPane = new JSplitPane( JSplitPane.VERTICAL_SPLIT, loadedClassesPanel, methodPanel );
+    classMethodPane.setDividerSize(4);
+    classMethodPane.setOneTouchExpandable(true);
+
+    JSplitPane classSourcePane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, classMethodPane, sourcePanel );
+    classSourcePane.setDividerSize(4);
+    classSourcePane.setOneTouchExpandable(true);
+
+    JSplitPane localWatchPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, localVariablesPanel, watchPanel );
+    localWatchPane.setDividerSize(4);
+    localWatchPane.setOneTouchExpandable(true);
+
+    JSplitPane listWatchPane = new JSplitPane( JSplitPane.VERTICAL_SPLIT, classSourcePane, localWatchPane );
+    listWatchPane.setDividerSize(4);
+    listWatchPane.setOneTouchExpandable(true);
+
+    getContentPane().add(listWatchPane, BorderLayout.CENTER);
+    getContentPane().add(debuggerStatusBar, BorderLayout.SOUTH);
+  }
+}

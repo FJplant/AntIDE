@@ -1,0 +1,440 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: $
+ * $Revision: $
+ * $History: $
+ */
+package com.antsoft.ant.debugger;
+
+import java.util.StringTokenizer;
+import java.io.*;
+import java.net.*;
+
+import java.awt.*;
+import sun.tools.debug.*;
+
+import com.antsoft.ant.debugger.Debugger;
+
+/**
+ * The start up module of Ant Debugger
+ *
+ * @author Kwon, Young Mo
+ */
+class AntDebuggerMain implements DebuggerProxy, DebuggerCallback {
+  private AntDebuggerMainFrame mainFrame;
+  private AntDebuggerPanel antDebuggerPanel;
+  private BreakpointManager breakpointManager;
+  private WatchManager watchManager;
+  private DebuggerCommandPanel debuggerCommandPanel;
+
+  private RemoteDebugger remoteDebugger;
+  RemoteThread currentThread;
+  RemoteThreadGroup currentThreadGroup;
+  PrintStream out = null;
+  PrintStream console = null;
+  private String lastArgs = null;
+
+  private static final String progname = "Ant Debugger 1.0";
+  private static final String version = "99/06/05";
+  static final String printDelimiters = ".[(";
+
+	public AntDebuggerMain( String host, String password, String javaArgs, String args,
+               PrintStream outStream, PrintStream consoleStream,
+               boolean verbose ) throws Exception {
+    mainFrame = new AntDebuggerMainFrame(this);
+    debuggerCommandPanel = new DebuggerCommandPanel(this);
+    antDebuggerPanel = new AntDebuggerPanel(this);
+    mainFrame.getContentPane().add(antDebuggerPanel, BorderLayout.CENTER);
+    mainFrame.pack();
+    mainFrame.setVisible(true);
+
+    initRemoteDebugger( host, password, javaArgs, args, outStream, consoleStream, verbose );
+	}
+
+  private void initRemoteDebugger( String host, String password, String javaArgs, String args,
+               PrintStream outStream, PrintStream consoleStream,
+               boolean verbose ) throws Exception {
+
+    System.out.println("Initializing " + progname + "...");
+    out = outStream;
+    console = consoleStream;
+    if (password == null) {
+      remoteDebugger = new RemoteDebugger(javaArgs, this, verbose);
+    } else {
+      remoteDebugger = new RemoteDebugger(host, password, this, verbose);
+    }
+    DataInputStream in = new DataInputStream(System.in);
+    String lastLine = null;
+
+    if (args != null && args.length() > 0) {
+        StringTokenizer t = new StringTokenizer(args);
+        String idToken = t.nextToken();
+        loadClass(idToken);
+        lastArgs = args;
+    }
+
+    Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
+
+    // Try reading user's startup file.
+    File f = new File(System.getProperty("user.home") +
+        System.getProperty("file.separator") + "jdb.ini");
+          if (!f.canRead()) {
+              // Try opening $HOME/jdb.ini
+              f = new File(System.getProperty("user.home") +
+                           System.getProperty("file.separator") + ".jdbrc");
+          }
+          readCommandFile(f);
+
+    // Try opening local jdb.ini
+    f = new File(System.getProperty("user.dir") +
+        System.getProperty("file.separator") + "startup.jdb");
+          readCommandFile(f);
+
+  }
+
+  void readCommandFile(File f) {
+    try {
+      if (f.canRead()) {
+        // Process initial commands.
+        DataInputStream inFile =
+            new DataInputStream(new FileInputStream(f));
+        String ln;
+        while ((ln = inFile.readLine()) != null) {
+          StringTokenizer t = new StringTokenizer(ln);
+          if (t.hasMoreTokens()) {
+            //executeCommand(t);
+          }
+        }
+      }
+    } catch (IOException e) {}
+  }
+
+	public static void main( String argv[] ) {
+    // Get host attribute, if any.
+    String localhost;
+    try {
+      localhost = InetAddress.getLocalHost().getHostName();
+    } catch (Exception ex) {
+      localhost = null;
+    }
+    if (localhost == null) {
+      localhost = "localhost";
+    }
+    String host = null;
+    String password = null;
+    String cmdLine = "";
+    String javaArgs = "";
+
+    boolean verbose = false;
+
+    for (int i = 0; i < argv.length; i++) {
+      String token = argv[i];
+      if (token.equals("-dbgtrace")) {
+        verbose = true;
+      } else if (token.equals("-X")) {
+        System.out.println(
+               "Use 'java -X' to see the available non-standard options");
+        System.out.println();
+        usage();
+        System.exit(1);
+      } else if (
+        // Standard VM options passed on
+        token.startsWith("-D") ||
+        // NonStandard options passed on
+        token.startsWith("-X") ||
+        // Old-style options (These should remain in place as long as
+        //  the standard VM accepts them)
+        token.equals("-noasyncgc") || token.equals("-prof") ||
+        token.equals("-verify") || token.equals("-noverify") ||
+        token.equals("-verifyremote") ||
+        token.startsWith("-ms") || token.startsWith("-mx") ||
+        token.startsWith("-ss") || token.startsWith("-oss") ) {
+
+        javaArgs += token + " ";
+      } else if (token.equals("-classpath")) {
+        if (i == (argv.length - 1)) {
+          System.out.println("No classpath specified.");
+          usage();
+          System.exit(1);
+        }
+        javaArgs += token + " " + argv[++i] + " ";
+      } else if (token.equals("-host")) {
+        if (i == (argv.length - 1)) {
+          System.out.println("No host specified.");
+          usage();
+          System.exit(1);
+        }
+        host = argv[++i];
+      } else if (token.equals("-password")) {
+        if (i == (argv.length - 1)) {
+          System.out.println("No password specified.");
+          usage();
+          System.exit(1);
+        }
+        password = argv[++i];
+      } else if (token.equals("-help")) {
+        usage();
+        System.exit(0);
+      } else if (token.equals("-version")) {
+        System.out.println(progname + " version " + version);
+        System.exit(0);
+      } else if (token.startsWith("-")) {
+        System.out.println("invalid option: " + token);
+        usage();
+        System.exit(1);
+      } else {
+        // Everything from here is part of the command line
+        cmdLine = token + " ";
+        for (i++; i < argv.length; i++) {
+          cmdLine += argv[i] + " ";
+        }
+        break;
+      }
+    }
+    if (host != null && password == null) {
+      System.out.println("A debug password must be specified for " +
+                         "remote debugging.");
+      System.exit(1);
+    }
+    if (host == null) {
+      host = localhost;
+    }
+
+    try {
+      if (!host.equals(localhost) && password.length() == 0) {
+        System.out.println(
+            "No password supplied for accessing remote " +
+            "Java interpreter.");
+        System.out.println(
+            "The password is reported by the remote interpreter" +
+            "when it is started.");
+        System.exit(1);
+      }
+      // Show command frame
+      AntDebuggerMain antDebuggerMain = new AntDebuggerMain(host, password, javaArgs, cmdLine,
+              System.out, System.out, verbose );
+      //Thread command = new Thread( antDebuggerMain );
+      //command.start();
+    } catch(SocketException se) {
+      System.out.println("Failed accessing debugging session on " +
+                           host + ": invalid password.");
+    } catch(NumberFormatException ne) {
+      System.out.println("Failed accessing debugging session on " +
+                           host + ": invalid password.");
+    } catch(Exception e) {
+      System.out.print("Internal exception:  ");
+      System.out.flush();
+      e.printStackTrace();
+    }
+	}
+
+  public RemoteDebugger getRemoteDebugger() {
+    return remoteDebugger;
+  }
+
+  public RemoteThread getCurrentThread() {
+    return currentThread;
+  }
+
+  public void step(StringTokenizer tn) throws java.lang.Exception {
+  }
+
+  public void cont() throws java.lang.Exception {
+    remoteDebugger.cont();
+  }
+
+  public void next() throws java.lang.Exception {
+  }
+
+  public void loadClass(String classId) throws Exception {
+    RemoteClass cls = remoteDebugger.findClass(classId);
+    if (cls == null) {
+        out.print(classId + " not found");
+        out.println((classId.indexOf('.') > 0) ?
+               " (try the full name)" : "");
+    } else {
+        out.println(cls.toString());
+    }
+    antDebuggerPanel.updateViews();
+  }
+
+  public void runClass(String command) throws Exception {
+  	String argv[] = new String[100];
+  	int argc = 0;
+
+    StringTokenizer t = new StringTokenizer(command);
+    
+  	if (!t.hasMoreTokens() && lastArgs != null) {
+	    t = new StringTokenizer(lastArgs);
+      out.println("run " + lastArgs);
+  	}
+   	while (t.hasMoreTokens()) {
+      argv[argc++] = t.nextToken();
+      if (argc == 1) {
+        // Expand name, if necessary.
+        RemoteClass cls = remoteDebugger.findClass(argv[0]);
+        if (cls == null) {
+          out.println("Could not load the " + argv[0] + " class.");
+          return;
+        }
+        argv[0] = cls.getName();
+      }
+  	}
+
+  	if (argc > 0) {
+	    RemoteThreadGroup newGroup = remoteDebugger.run(argc, argv);
+	    if (newGroup != null) {
+    		currentThreadGroup = newGroup;
+    		setThread(1);
+    		out.println("running ...");
+	    } else {
+    		out.println(argv[0] + " failed.");
+	    }
+  	} else {
+	    out.println("No class name specified.");
+  	}
+
+    antDebuggerPanel.updateViews();
+  }
+
+  public void close() {
+    remoteDebugger.close();
+  }
+
+  void setThread(int threadId) throws Exception {
+  	setDefaultThreadGroup();
+  	RemoteThread thread = indexToThread(threadId);
+  	if (thread == null) {
+	    out.println("\"" + threadId +
+			       "\" is not a valid thread id.");
+	    return;
+  	}
+  	currentThread = thread;
+  }
+
+  private RemoteThread indexToThread(int index) throws Exception {
+  	setDefaultThreadGroup();
+    RemoteThread list[] = currentThreadGroup.listThreads(true);
+  	if (index == 0 || index > list.length) {
+	    return null;
+  	}
+  	return list[index-1];
+  }
+
+  private void setDefaultThreadGroup() throws Exception {
+  	if (currentThreadGroup == null) {
+	    RemoteThreadGroup tglist[] = remoteDebugger.listThreadGroups(null);
+	    currentThreadGroup = tglist[0];	// system threadgroup
+	  }
+  }
+
+  public static void usage() {
+    String separator = System.getProperty("path.separator");
+    System.out.println("Usage: " + progname + " <options> <class> <arguments>");
+    System.out.println();
+    System.out.println("where options include:");
+    System.out.println("    -help             print out this message and exit");
+    System.out.println("    -version          print out the build version and exit");
+    System.out.println("    -host <hostname>  host machine of interpreter to attach to");
+    System.out.println("    -password <psswd> password of interpreter to attach to (from -debug)");
+    System.out.println("    -dbgtrace         print info for debugging " + progname);
+    System.out.println();
+    System.out.println("options forwarded to debuggee process:");
+    System.out.println("    -D<name>=<value>  set a system property");
+    System.out.println("    -classpath <directories separated by \"" +
+                       separator + "\">");
+    System.out.println("                      list directories in which to look for classes");
+    System.out.println("    -X<option>        non-standard debuggee VM option");
+    System.out.println();
+    System.out.println("<class> is the name of the class to begin debugging");
+    System.out.println("<arguments> are the arguments passed to the main() method of <class>");
+    System.out.println();
+    System.out.println("For command help type 'help' at " + progname + " prompt");
+  }
+
+  public void stepinto() throws java.lang.Exception {
+    //TODO: implement this com.antsoft.ant.debugger.DebuggerProxy method;
+  }
+
+  public void stepup() throws java.lang.Exception {
+    //TODO: implement this com.antsoft.ant.debugger.DebuggerProxy method;
+  }
+
+  // From here, DebuggerCallback Methods.
+  public void printToConsole(String text) throws java.lang.Exception {
+    //TODO: implement this sun.tools.debug.DebuggerCallback method;
+    console.print(text);
+    console.flush();
+  }
+
+  public void breakpointEvent(RemoteThread t) throws java.lang.Exception {
+    //TODO: implement this sun.tools.debug.DebuggerCallback method;
+    out.print("\nBreakpoint hit: ");
+    RemoteStackFrame[] stack = t.dumpStack();
+    if (stack.length > 0) {
+      out.println(stack[0].toString());
+        currentThread = t;
+    } else {
+      currentThread = null; // Avoid misleading results on future "where"
+      out.println("Invalid thread specified in breakpoint.");
+    }
+    //printPrompt();
+    antDebuggerPanel.updateViews();
+    debuggerCommandPanel.setRunning( false );
+  }
+
+  public void exceptionEvent(RemoteThread t, String errorText) throws java.lang.Exception {
+    //TODO: implement this sun.tools.debug.DebuggerCallback method;
+	  out.println("\n" + errorText);
+	  t.setCurrentFrameIndex(0);
+  	currentThread = t;
+    //printPrompt();
+    antDebuggerPanel.updateViews();
+    debuggerCommandPanel.setRunning( false );
+  }
+
+  public void threadDeathEvent(RemoteThread t) throws java.lang.Exception {
+    //TODO: implement this sun.tools.debug.DebuggerCallback method;
+    if (t == currentThread) {
+      String currentThreadName;
+
+      // Be careful getting the thread name. If this event happens
+      // as part of VM termination, it may be too late to get the
+      // information, and an exception will be thrown.
+      try {
+         currentThreadName = " \"" + t.getName() + "\"";
+      } catch (Exception e) {
+         currentThreadName = "";
+      }
+
+      currentThread = null;
+      out.println();
+      out.println("Current thread" + currentThreadName + " died. Execution continuing...");
+      //printPrompt();
+    }
+  }
+
+  public void quitEvent() throws java.lang.Exception {
+    //TODO: implement this sun.tools.debug.DebuggerCallback method;
+    String msg = null;
+    if (lastArgs != null) {
+      StringTokenizer t = new StringTokenizer(lastArgs);
+      if (t.hasMoreTokens()) {
+        msg = new String("\n" + t.nextToken() + " exited");
+      }
+    }
+    if (msg == null) {
+      msg = new String("\nThe application exited");
+    }
+    out.println(msg);
+    currentThread = null;
+    antDebuggerPanel.updateViews();
+  }
+}
+

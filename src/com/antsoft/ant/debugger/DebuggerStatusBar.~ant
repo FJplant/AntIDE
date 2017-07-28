@@ -1,0 +1,32 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: $
+ * $Revision: $
+ * $History: $
+ */
+package com.antsoft.ant.debugger;
+
+import javax.swing.JFrame;
+import sun.tools.debug.*;
+
+/**
+ * Debugger의 상태바입니다.
+ *
+ * @author
+ */
+class DebuggerStatusBar extends JFrame {
+  private RemoteDebugger remoteDebugger;
+    
+  /**
+   * Only classes in same package can instaciate me
+   */
+  DebuggerStatusBar() {
+  } 
+}
+

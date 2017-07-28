@@ -1,0 +1,57 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: /AntIDE/source/ant/debugger/BreakpointPanel.java 2     99-05-16 11:42p Multipia $
+ * $Revision: 2 $
+ * $History: BreakpointPanel.java $
+ * 
+ * *****************  Version 2  *****************
+ * User: Multipia     Date: 99-05-16   Time: 11:42p
+ * Updated in $/AntIDE/source/ant/debugger
+ * 
+ * *****************  Version 1  *****************
+ * User: Multipia     Date: 99-05-11   Time: 6:48p
+ * Created in $/AntIDE/source/ant/debugger
+ * Initial Version.
+ */
+
+package com.antsoft.ant.debugger;
+
+import java.awt.*;
+import java.util.Vector;
+import javax.swing.*;
+
+public class BreakpointPanel extends JPanel {
+  private JFrame myWrapperFrame;
+  BorderLayout borderLayout1 = new BorderLayout();
+  JList locals = new JList();
+  public BreakpointPanel() {
+    myWrapperFrame = new JFrame("Breakpoints");
+    try  {
+      uiInit();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void uiInit() throws Exception {
+    setLayout(borderLayout1);
+    add(new JScrollPane(locals), BorderLayout.CENTER);
+    setPreferredSize( new Dimension( 300, 200 ) );
+
+    myWrapperFrame.getContentPane().add(this, BorderLayout.CENTER);
+    myWrapperFrame.pack();
+    myWrapperFrame.setVisible();
+  }
+
+  public void setBreakpoints( Vector list ) {
+    locals.setListData( list );
+  }
+}
+

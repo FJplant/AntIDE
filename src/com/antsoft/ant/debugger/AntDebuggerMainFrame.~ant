@@ -1,0 +1,177 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: $
+ * $Revision: $
+ * $History: $
+ */
+package com.antsoft.ant.debugger;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+/**
+ * Ant Debugger의 Main Frame 역할을 하는 Class입니다.
+ *
+ * @author Kwon, Young Mo
+ */
+class AntDebuggerMainFrame extends JFrame {
+  private DebuggerProxy debuggerProxy;
+
+  /**
+   * Only classes in same package can instaciate me
+   */
+  AntDebuggerMainFrame(DebuggerProxy debuggerProxy) {
+    super( "Ant Debugger 1.0" );
+    this.debuggerProxy = debuggerProxy;
+    uiInit();
+  }
+
+  void uiInit() {
+    // build menus
+    JMenuBar menuBar = new JMenuBar();
+    menuBar.add( new FileMenu() );
+    menuBar.add( new DebugMenu() );
+    menuBar.add( new ViewMenu() );
+    menuBar.add( new HelpMenu() );
+    setJMenuBar(menuBar);
+    getContentPane().setLayout(new BorderLayout());
+  }
+
+  protected void loadClass(){
+    String classId = JOptionPane.showInputDialog(this, "Type class name to load.", "Load class", JOptionPane.OK_CANCEL_OPTION );
+    if ( classId == null )
+      return;
+
+    try {
+      debuggerProxy.loadClass(classId);
+    } catch ( Exception e ) {
+      System.err.println(e.toString());
+    }
+  }
+
+  protected void runClass() {
+    String classId = JOptionPane.showInputDialog(this, "Type class name to run.", "Load class", JOptionPane.OK_CANCEL_OPTION );
+
+    if ( classId == null )
+      return;
+    try {
+      debuggerProxy.runClass(classId);
+    } catch ( Exception e ) {
+      System.err.println(e.toString());
+    }
+  }
+
+  protected void setSourcePath( ) {
+    String sourcePath = JOptionPane.showInputDialog(this, "Type source path", "Set source path", JOptionPane.OK_CANCEL_OPTION );
+    if ( sourcePath != null ) {
+      try {
+        debuggerProxy.getRemoteDebugger().setSourcePath(sourcePath);
+      } catch ( Exception e ) {
+        // TODO: 이후에는 Message Box로 출력
+        System.err.println( e.toString() );
+      }
+    }
+  }
+
+  class FileMenu extends JMenu implements ActionListener {
+    JMenuItem loadClass, runClass, setSourcePath, exit;
+    FileMenu() {
+      super("File");
+      loadClass = new JMenuItem("Load Class...");
+      runClass = new JMenuItem("Run Class...");
+      setSourcePath = new JMenuItem("Set Source Path...");
+      exit = new JMenuItem("Exit");
+
+      loadClass.addActionListener(this);
+      runClass.addActionListener(this);
+      setSourcePath.addActionListener(this);
+      exit.addActionListener(this);
+      
+      add(loadClass);
+      add(runClass);
+      add(setSourcePath);
+      addSeparator();
+      add(exit);
+    }
+
+    public void actionPerformed( ActionEvent e ) {
+      if ( e.getSource() == loadClass ) {
+        loadClass();
+      } else if ( e.getSource() == runClass ) {
+        runClass();
+      } else if ( e.getSource() == setSourcePath ) {
+        setSourcePath();
+      } else if ( e.getSource() == exit ) {
+        // 디버거의 상태를 저장한다.
+        debuggerProxy.close();
+        System.exit(0);
+      }
+    }
+  }
+
+  class DebugMenu extends JMenu {
+    JMenuItem run, reset;
+    JMenuItem stopIn, stopAt;
+    JMenuItem cont, stepOver, stepInto, stepUp;
+
+    DebugMenu() {
+      super("Debug");
+      run = new JMenuItem("Run");
+      reset = new JMenuItem("Reset");
+      stopIn = new JMenuItem("Stop In...");
+      stopAt = new JMenuItem("Stop At...");
+      cont = new JMenuItem("Cont");
+      stepOver = new JMenuItem("Step Over");
+      stepInto = new JMenuItem("Step Into");
+      stepUp = new JMenuItem("Step Up");
+
+      add(run);
+      add(reset);
+      addSeparator();
+      add(stopIn);
+      add(stopAt);
+      addSeparator();
+      add(cont);
+      add(stepOver);
+      add(stepInto);
+      add(stepUp);
+    }
+  }
+
+  class ViewMenu extends JMenu {
+    JMenuItem watch, localVariables, breakpoint, thread, callStack;
+
+    ViewMenu() {
+      super("View");
+      watch = new JMenuItem("View Watch");
+      localVariables = new JMenuItem("View LocalVariables");
+      breakpoint = new JMenuItem("View Breakpoints");
+      thread = new JMenuItem("View Threads");
+      callStack = new JMenuItem("View Call Stack");
+
+      add(watch);
+      add(localVariables);
+      add(breakpoint);
+      add(thread);
+      add(callStack);
+    }
+  }
+
+  class HelpMenu extends JMenu {
+    JMenuItem about;
+
+    HelpMenu() {
+      super("Help");
+      about = new JMenuItem("About...");
+
+      add(about);
+    }
+  }
+}

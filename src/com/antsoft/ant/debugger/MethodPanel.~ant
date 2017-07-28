@@ -1,0 +1,78 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * Author:       Kwon, Young Mo
+ * $Header: $
+ * $Revision: $
+ * $History: $
+ */
+
+package com.antsoft.ant.debugger;
+
+import java.awt.*;
+import java.util.Vector;
+import javax.swing.*;
+
+import sun.tools.debug.*;
+
+public class MethodPanel extends JPanel {
+  private DebuggerProxy debuggerProxy;
+
+  BorderLayout borderLayout1 = new BorderLayout();
+  JList methodList = new JList();
+  DefaultListModel methodModel = new DefaultListModel();
+  JLabel title = new JLabel("Method Lists: ");
+
+  public MethodPanel( DebuggerProxy proxy ) {
+    debuggerProxy = proxy;
+    try  {
+      uiInit();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void uiInit() throws Exception {
+    this.setLayout(borderLayout1);
+    methodList.setModel(methodModel);
+
+    add( title , BorderLayout.NORTH);
+    setPreferredSize( new Dimension( 200, 150 ) );
+    add(new JScrollPane(methodList), BorderLayout.CENTER);
+  }
+
+  public void setClass( String classId ) {
+    methodModel.removeAllElements();
+    title.setText("Method Lists: " + classId);
+
+    if (classId == null ) {
+      JOptionPane.showMessageDialog(this, "No class specified.", "Warning", JOptionPane.WARNING_MESSAGE );
+      return;
+    }
+
+    try {
+      RemoteClass cls = (RemoteClass)debuggerProxy.getRemoteDebugger().findClass(classId);
+	    /* It's a class */
+	    if (cls == null) {
+	    	throw new IllegalArgumentException();
+	    }
+
+      RemoteField methods[] = cls.getMethods();
+      for (int i = 0; i < methods.length; i++) {
+        methodModel.addElement(methods[i].getTypedName());
+      }
+    } catch (IllegalArgumentException e) {
+      JOptionPane.showMessageDialog(this, "\"" + classId +
+                                    "\" is not a valid id or class name.", "Warning", JOptionPane.WARNING_MESSAGE );
+    } catch (Exception e) {
+      System.err.println(e.toString());
+
+    }
+  }
+}
+
