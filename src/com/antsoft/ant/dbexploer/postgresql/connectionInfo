@@ -1,0 +1,56 @@
+1. Oracle	
+		// oracle thin
+		//ConnectionInfo info = new ConnectionInfo( "oracle.jdbc.driver.OracleDriver",  "jdbc:oracle:thin:@(description=(address=(host=210.124.152.2)(protocol=tcp)(port=1521))(connect_data=(sid=orcl)))", "scott", "tiger" ); 
+		//ConnectionInfo info = new ConnectionInfo( "oracle.jdbc.driver.OracleDriver",  "jdbc:oracle:thin:@ant:1521:orcl", "scott", "tiger" ); 
+
+		--> Refulsed:ROR=(CODE=12505)(EMFI=4))))
+		    이런 메세지만 내보낸다.
+		    어떡하라고?
+
+
+
+		// oracle oci
+		//ConnectionInfo info = new ConnectionInfo( "oracle.jdbc.driver.OracleDriver",  "jdbc:oracle:oci8:@(description=(address=(host=ant)(protocol=tcp)(port=1521))(connect_data=(sid=orcl)))", "scott", "tiger" );
+		//ConnectionInfo info = new ConnectionInfo( "oracle.jdbc.driver.OracleDriver",  "jdbc:oracle:oci8:@ant:1521:orcl", "scott", "tiger" );
+
+		--> 이것도 역시나 dll을 내놓으라고 한다.
+		    어떡해야 하나?
+
+
+
+2. postgress
+
+		// postgresql
+		//ConnectionInfo info = new ConnectionInfo( "postgresql.Driver", "jdbc:postgresql://ant:5432/namecard", "anda", "anda" );
+
+		--> ResultSet 을 못 받아온다. 
+		    그래서 아무것도 할 수가 없다.
+		    뭐 이런게 다 있노?
+
+
+3. mysql
+
+		// mysql
+		//ConnectionInfo info = new ConnectionInfo( "org.gjt.mm.mysql.Driver", "jdbc:mysql://ant:3306/ant", "anda", "anda" );
+
+		--> general Erro :72 라고만 한다. 
+		    그러면 내가 아나?
+		    드라이버는 있는거 같은데 뭐가 문제지?
+
+
+
+4. MsSql
+
+		// ms sql
+		ConnectionInfo info = new ConnectionInfo( "com.inet.tds.TdsDriver", "jdbc:inetdae:antserver:1433?database=ant", "sa", "ant123" );
+		
+		--> 유일하게 잘 되는거다.
+		    너무 착한 애!!!
+
+
+		//ConnectionInfo info = new ConnectionInfo( "com.imaginary.sql.msql.MsqlDriver", "jdbc:msql://antserver:1114/ant", "sa", "ant123" );
+
+		--> 얘는 드라이버 찾다가 클래스가 없다는 에러가 난다.
+		    왜 없지?
+		    어쩔 수 없다.
+

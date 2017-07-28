@@ -1,0 +1,57 @@
+** DBExplorer 사용법
+
+  
+   1. 실행은 java ParentFrame  으로
+
+   2. ParentFrame.java는 parent frame을 하나 생성해서 connection 정보를 받기 위한
+      dialog 를 띄운다.
+      driver, url, id, pass를 지정해주고 'connect'버튼을 누르면 다음으로 넘어간다.
+   2-1. cancel버튼을 누르면 끝난다.
+
+   3. 다음에 뜬 frame은 ExplorerFrame이다.
+      TabbedPane을 가지고 있고 위에 tablelist를 보여준다.
+      BorderLayout으로 되어있고 south에 button이나 설명을 좀 넣을까 하다 말았다.
+      필요하다면 south에 넣더록 하세요.
+
+   4. table List를 가져온 상태인데 combobox에서 선택해서 show button을 누르면 
+      table 내용을 보여준다.
+      처음엔 선택만 하면 그냥 보여주게 했는데... 
+      비효율적인거 같아서 button 을 넣었다.
+  
+   5. Table Tab
+      table List에서 show button을 누르면 table을 보여주는 tab
+      밑에 나오는 버튼을 통해 새로운 데이터를 넣기도 하고 지우기도 한다.
+      현상태에서 값을 바꾸면 바로 update된다.
+
+   6. Query Tab
+      query문을 입력하는 tab
+      query문을 입력하고 Excute button 을 누르면 
+      Result Tab으로 가면 거기에 대한 result 가 보인다
+      Reset button을 누르면 현재 있던 query문이 없어지고 새로운 query문을
+      입력할 수 있다.
+
+   7. Result Tab
+      Query Tab에서 입력받은  query문에 대한 결과를 보여주는 tab
+      DDL 문의 경우는 별게 없고
+      DML 문의 경우는 몇개의 row가 변했다는걸 보여준다.
+      select문은 결과 Set을 table로 보여준다.
+      여기서 data 를 수정하는 일은 불가능하다.
+
+   8. CreateTable Tab
+      table을 생성하는 tab
+      column 이름과 data type을 입력해서 create button을 누르면 
+      바로 table을 생성하는 것이 아니고 Query Tab으로 보내진다.
+      사용자가 원하는 부분을 넣을 수 있도록 query문만 보여준다.
+      여기서 Excute 버튼을 누르면 table이 생성된다.
+      그런데 datatypelist를 DB 에서 직접 얻어오긴 하는데 
+      이게 지원 안 하는것도 가져오는거 같다.
+      이 부분은 아직 수정을 못 했습니다.
+      죄송....
+
+   9. 현재 row수같은걸 추가해보려고 했는데 아직은 안 됩니다.
+      추후에 추가하고싶은 사항이 있으면 요청하세요.
+      A/S는 확실히 해야죠...
+
+
+   
+     
