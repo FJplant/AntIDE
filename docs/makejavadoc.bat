@@ -1,0 +1,1 @@
+javadoc -sourcepath f:\antide\source -d f:\antide\docs\api -doctitle "ANT IDE Beta API Specification" -header "<b>AntIDE</b><br>Beta" -bottom "AntIDE is a trademark or registered trademark of Antsoft, co." @packages

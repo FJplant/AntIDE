@@ -1,0 +1,101 @@
+/*
+ * $Header: /AntIDE/document/Wizard 기능.txt 1     99-04-24 12:23a Multipia $
+ * $Revision: 1 $
+ *
+ * 각종 Wizard 기능들의 요구 사항 및 구현 방법에 대해서 적혀 있는 글입니다.
+ * Antsoft Co. Copyrights 1999, All rights are reserved.
+ * 			    Kwon, Young Mo
+ */
+
+1. 생성할 Wizard
+Application
+Applet
+Project
+Frame
+Panel
+Menu
+Servet
+Class
+Dialog
+Form
+Bean
+BeanInfo
+BeanEvent
+
+2. 생성할 공통 Method
+/**
+ * 이 메소드에서 모든 buildXXX 를 호출하고 
+ * 모든 UI들을 Generate한다.
+ */
+protected void buildUI() {
+  ...
+  ...
+  build
+/**
+ * 이 메소드에서 메뉴들을 생성한다.
+ */
+protected void buildMenu() {
+}
+
+/**
+ * 이 메소드에서 Toolbar를 생성한다.
+ */
+protected void buildToolBar() {
+}
+
+/**
+ * 이 메소드에서 상태바를 생성한다.
+ */
+protected void buildStatusBar() {
+}
+
+3. 생성시 필요한 내용들
+Application
+  - Main Frame Title : String
+  - Menu Bar         : [ ]
+  - Tool Bar         : [ ]
+  - StatusBar        : [ ]
+
+Applet
+  - Applet Size      :
+  - HTML Generate
+
+Project
+  - Applet인지 Application인지 선택한 후에 새로운 프로젝트를 생성
+  - Company Info, Author Info, Description 등을 입력 받음
+  - Application Wizard 또는 Applet Wizard 실행
+ 
+Frame
+  - Main Frame Title : String
+  - Menu Bar         : [ ]
+  - Tool Bar         : [ ]
+  - StatusBar        : [ ]
+  - Layout
+
+Panel
+  - Layout ( BorderLayout, CardLayout, ... )
+  - Component
+
+Menu
+  - Menu
+  - MenuItem
+
+Servet
+  - doPost
+  - Parameter
+
+Class
+  - Method
+  - Field
+  - InnerClasses
+  - Static Initializer
+
+Dialog
+
+Form
+
+Bean
+
+BeanInfo
+
+BeanEvent

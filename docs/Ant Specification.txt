@@ -2,8 +2,8 @@
 
 Copyright 1998-1999, Antsoft Co. All rights reserved.
 
-$Header: /usr/cvsroot/AntIDE/document/Ant\040Specification.txt,v 1.1 1999/07/22 04:04:21 multipia Exp $
-$Revision: 1.1 $
+$Header: /AntIDE/document/Ant Specification.txt 11    99-06-28 11:16p Multipia $
+$Revision: 11 $
 
 Ant 1.0 specification
   Development Duration: 1999/01/01~1999/06/30

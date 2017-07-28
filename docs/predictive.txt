@@ -1,0 +1,57 @@
+제목: 예측형의 Java Code 에디터에 관한 제안
+날짜: 1999년 3월 15일 PM06:50 비옴.
+작성: 권영모
+개요: 에디터 화면에서 현재, Caret에 위치한 곳에서 사용가능한 구문들의 
+리스트를 캐럿 아래에 출력하여서 마우스를 이용한 선택만으로 코딩이 
+가능하도록 한다.
+용어: 
+  Coding Assistant: 현재, 캐럿의 위치에서 사용 가능한 후보들을 보여 준다.
+가정:
+  현재, 캐럿의 위치에 대한 문법적인 정보가 필요하다.
+  즉, abc.java$classname$methodname$while$...
+ 등의 블럭 단위의 scope를 알아 내어야 한다.
+구현: 
+  항상, 캐럿의 아래의 위치에서 떠 다니거나, 특정 위치에 Docking된 형태의
+UI를 제공하면서, 사용가능한 구문들을 보여 준다.
+  예를 들면, 특정 소스파일의 가장 탑 레벨인 경우에는 new class라는 메뉴가
+보이고,
+  소스 파일 내에서는 new method, new field, new initializer, new inner class
+등을 보이도록 하고,
+  method내로 들어 가면, 현재, 사용가능한 Object들의 리스트와 새로 만들
+문장들의 리스트를 보여 준다.
+
+  이 때에, 사용가능한 Object List들을 Code Context가 유지를 하고 있기 때문에
+쉽게 찾아 올 수가 있게 된다.
+  또한, 새로운 문장인 if, while, for, do, switch, 등을 선택할 수 있도록 
+하고, 이 것들을 선택하였을 경우에 다이얼로그 박스를 띄우거나 사용가능한
+Object들을 출력하여 준다.
+
+  기본적으로 자바는 primitive type과 object로 구분이 되어 있기 때문에
+적용하기가 한결 쉬울 것이다.
+
+시나리오: 
+  1. 새로운 .java 파일을 작성한 경우
+    소스 파일에 아무런 내용이 없는 경우에는
+    package, import, public, class, interface를 선택가능 하도록 한다.
+    package 다음인 경우에는 사용가능한 package 목록을 출력한다.
+    import 다음인 경우에는 사용가능한 package 또는 출력한다.
+
+  2. class의 멤버 변수를 추가하는 경우
+  3. class의 멤버 Method를 추가하는 경우
+  4. class내의 inner class를 추가하는 경우
+  5. Method내에서 특정, 변수를 선언하는 경우
+  6. 새로운 Object를 생성(new)하는 경우
+  7. 새로운 구문을 (for, while, if, switch, try, ... ) 생성하는 경우 
+  8. 특정 Object를 선택하고, 그것의 Method를 호출 선택하는 경우
+  9. 특정 Object들 간에 Assignment를 하는 경우
+  10. 특정 Object들 간에 Operating하는 경우
+  11. 특정 Object들 간에 Comparison하는 경우
+  
+구현:
+  현재, 사용가능한 모든 Object들과 문법 템플릿을 출력 대상으로 두고, 
+그 중에서 현재 Scope에 Applicable한 Item들을 추려 내도록 한다.
+
+Roles:
+  keywords
+  operators
+

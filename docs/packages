@@ -1,0 +1,17 @@
+ant.browser.classbrowser
+ant.browser.packagebrowser
+ant.browser.sourcebrowser
+ant.codecontext
+ant.codecontext.information.classdesigner
+ant.codecontext.information.codeeditor
+ant.designer.classdesigner
+ant.designer.codeeditor
+ant.main
+ant.manager.projectmanager
+ant.pool.classpool
+ant.pool.librarypool
+ant.pool.packagepool
+ant.pool.sourcepool
+ant.property
+ant.property.defaultproperty
+ant.util

@@ -1,0 +1,19 @@
+AntIDE Install README
+
+@Launch property설정 할때 다음을 추가한다(Heap사이즈 설정)
+  lax.nl.java.option.java.heap.size.initial = 40000000
+  lax.nl.java.option.java.heap.size.max = 40000000
+
+@%InstallAnywhere%resource\Projects.properties 파일에 다음을 추가한다
+  (Jre를 최신의 것을 사용하도록 한다)
+  installer.win32.bundled.vm.executable=bin\\jre.exe
+  designer.win32.bundled.vm.source=C:\\javasoft\\jdk1.2.1\\jre\\
+  Win32JitName=Symcjit
+
+@Launcher로 부터 Install Directory받아오기
+  System.getProperty("lax.root.install.dir")
+
+@Lib에 tools.jar도 추가해야 한다.
+
+@Jar 만들기
+jar cvf ..\lib\ant.jar ant\*

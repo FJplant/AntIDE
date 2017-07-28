@@ -1,0 +1,15 @@
+제목: Java Source File의 모델
+날짜: 1999년 3월 16일 AM00:10 비옴.
+작성: 권영모
+개요: 기본적으로 Flyweight Pattern을 이용하여, Java Keyword, Object instances
+Object Type, 등을 Mapping하는 형태로 자료를 관리하도록 하며,
+      Line, Col의 형태로 소스를 보여줄 수 있는 Mapping기능을 제공한다.
+용어: 
+가정:
+구현: 
+
+시나리오: 
+Roles:
+Items:
+  Keywords, Object Types, Literals, Comment, Punctuator, Variables,
+  Separator ( Space, Tab, NewLine )

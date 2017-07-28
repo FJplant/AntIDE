@@ -1,0 +1,173 @@
+$Header: /AntIDE/document/Database Bean에 관한 연구.txt 3     99-05-18 5:24p Multipia $
+$Revision: 3 $
+State: Planning
+
+연구자: 권영모
+  소속: 개미소프트
+
+제목: Database에 기반한 Java Bean 자동 생성 기능 및 이에 관한 응용 기술에 대한 연구
+KEYWORDS: Database, RDBMS, JavaBean, BeanInfo, Servlet, JSP, JDBC, Table, Query
+
+개요:   일반적으로 자바를 이용한 Database 응용 프로그램 개발시에는 JDBC( Java Database
+      Conectivity)라는 방법을 이용해서 개발을 한다.
+        이 때에 JDBC를 이용하면 단순히 자바언어의 장점은 그다지 살리지를 못하고, 
+      그냥, SQL 쿼리문을 토대로 소프트웨어를 개발하게 된다.
+        이것을 Java Bean 이라는 컴포넌트 기술과 Database Table 및 Query문에 의한 ResultSet
+      에 의하여 Java Bean을 자동 생성하고, 프로그램에서 사용하는 방안에 관한 연구이다.
+
+내용:
+  1. JDBC에서 Database 내용은 DatabaseMetaData에서 찾을 수 있다.
+     여기에서 데이터베이스에 어떤 테이블들이 있는지를 찾아낼 수도 있으며, 각종 Database의 
+    정보를 알아낼 수 있다.
+  2. Query 문에 대한 결과는 ResultSet에서 찾아낼 수 있다.
+  3. ResultSet의 Meta data는 ResultSetMetaData에서 찾을 수 있다.
+  4. ResultSetMetaData에서부터 [TableName|QueryName]Bean 및 [TableName|QueryName]BeanInfo를
+    생성한다.
+  5. 생성된 Bean과 BeanInfo를 통해서, Form Design, HTML 디자인 등의 작업을 행한다.
+
+사용 Pattern:
+  1. Factory Pattern:
+     DBBeanFactory
+     Factory에다가 Query 문을 집어 넣으면 Java Bean이 튀어나오는 형태로 지원한다.
+
+시나리오:
+  1. 사용자는 자신이 원하는 데이터베이스를 접속하는 방법으로 4가지중 1가지를 선택한다.
+  2. 사용자가 사용할 JDBC 드라이버를 선택한다.
+  3. User ID와 Password를 이용해서 접속을 한다.
+  4. 사용자는 Database를 선택한다.
+  5. 본 프로그램은 선택한 Database에 관한 정보를 표시하여 준다.
+  6. 사용자는 직접 특정 Table을 선택하거나, Table들을 Query를 통해서 Join 한다.
+  7. 본 프로그램은 사용자가 선택한 ResultSet을 표현하는 ResultSetMetaData를 통해서 
+   Java Bean 및 Java BeanInfo Class를 생성하고 컴파일 한다. 이 때에 super class는 
+   미리 Database에 관련하여 만들어진 Java Bean으로부터 상속 받는다.
+     만일, ResultSet에 아래와 같은 정보가 있었다면
+
+      Table Name: 학생
+      학번(PK) |  이름  | 나이 | 전화번호 | 주소
+      ---------------------------------------
+      1234     | 권영모 | 25   | 985-0355 | 대구시...
+
+     생성되는 Java Bean은 아래와 같다.
+
+// 파일 시스템의 문제로 인하여 public class 이름으로 유니코드를 사용 못하면
+// 변환할 수 있는 정책을 제공한다.
+public class 학생 extends DBJavaBean {
+  String 학번;
+  String 이름;
+  int    나이;
+  String 전화번호;
+  String 주소;
+
+  public String get학번() {
+    return 학번;
+  }
+  public void set학번(String 학번) {
+    this.학번 = 학번;
+  }
+
+  public int get나이 () {
+    return 나이;
+  }
+
+  public void set나이 ( int 나이 ) {
+    this.나이 = 나이;
+  }
+
+  public String get이름 () {
+    return 이름;
+  }
+
+  public void set이름 ( String 이름 ) {
+    this.이름 = 이름;
+  }
+
+  public String get전화번호 () {
+    return 전화번호;
+  }
+
+  public void set전화번호 ( String 전화번호 ) {
+    this.전화번호 = 전화번호;
+  }
+
+  public String get주소 () {
+    return 주소;
+  }
+
+  public void set주소 ( String 주소 ) {
+    this.주소 = 주소;
+  }
+
+  public void set학번 ( String 학번 ) {
+    this.학번 = 학번;
+  }
+  
+  // 데이터베이스에 실제로 다시 저장하는 함수
+  public void commit() {
+
+  }
+}
+
+ 또한, 각각의 멤버 변수들에는 setConstraints나이( Range range ) 등의 
+제한치를 설정할 수 있도록 해 준다.
+
+ 위와 같은 JavaBean들의 활용 방안은
+ 우선, Result Set을 List나 Vector 등에 Java Bean 형태로 넣어 두고, 
+현재의 Java Bean을 Cursor 형태로 사용할 수가 있을 것이다.
+
+ 이렇게 되면 Java Bean을 Form Editor 등에서 바로 사용할 수 있기 때문에
+Database 관련 프로그램을 쉽게 작성을 할 수가 있으며,
+
+ JSP 등을 활용할 경우 복잡한 Query문 및 조작문을 통하지 않고도
+ HTML 상에서 Database의 특정 Data를 표시할 수가 있으며, 
+ <FORM></FORM> 안의 형태로 Java Bean을 통해서 데이터를 수정할 수도 
+ 있게 된다.
+
+ 또한, 현재는 JSP가 많이 활성화가 되어 있지 않은 관계로
+ 위에서 나타내는 JavaBean과 Servlet의 결함이야 말로 많은 생산성의 
+향상을 가져올 수 있을 것이다.
+
+ 가능하다면 위의 자바소스를 완전히 숨기는 것도 좋은 방법 중의 하나일
+것이다. 즉, 유저에게 최대한 눈에 보이는 쉬운 내용들만 보여주어서
+작업을 처리하게 하는 것이다.
+
+ 즉, Servlet에서 Database에 들어 있는 특정 Data들을 가져올 때에는 
+ Servlet Wizard에서 생성된 JavaBean의 Property들을 나열만 내주면
+ HTML로 출력이 가능할 것이고,
+  Servlet에서 Form 형태로 출력을 해 주면, 사용자의 POST 또는 GET을
+ 통해서 변경된 데이터가 날라오면 다시 그 값을 JavaBean에다가 넣고,
+ JavaBean의 commit() 메소드을 이용하면 Database에 간단히 update가
+ 될 것이다.
+
+ 사용예:
+   회원 정보, 매입 매출, 재고, ...
+
+정리:
+  프로그램에서 제공하는 기능은 아래와 같다.
+  1. JDBC 드라이버를 이용한 Database 접속 기능
+  2. User가 원하는 Table 또는 Query에 기반한 JavaBean, BeanInfo 생성 기능
+  3. Swing UI를 이용한 Form Design 기능 및 JavaBean과 UI간의 Binding 기능
+     ( 당연히 DBNavigator는 필요할 것이다 )
+  4. JavaBean에 기반하여 Data를 웹에 보여주는 Servlet 생성 기능
+  5. JavaBean에 기반하여 Data를 수정할 수 있도록 FORM을 생성하는 Servlet 생성 기능
+  6. JavaBean에 기반하여 doGet(), doPost()를 처리할 수 있는 Servlet 생성 기능
+  7. JavaBean을 직접 HTML에 Embed할 수 있는 JSP 지원 기능
+
+개발 인력:
+  시스템 설계 및 문서화: 권영모
+  구현: 김영주, 김윤경
+
+결론: 
+   이미 안정화 되어 있는 RDBMS를 JavaBean으로 mapping하여서 Java언어의
+장점을 누리면서 진실로 빠른 Database Application을 작성할 수 있게 될
+것이다.
+
+장점:
+   만일 JDBC를 직접 이용해서 Servlet 프로그램을 작성하는 경우를 예로 든다면,
+   프로그램의 전체 Logic은 ResultSet으로부터의 getByte(), getString() 등의 함수로
+ 알아보기가 힘이들게 될 것이다.
+   하지만, JavaBean을 이용하게 되면 간단히 Database 프로그램 개발 작업의 많은
+ 부분을 자동화 할 수 있게 된다.
+
+문제점:
+  현재, WHERE 절을 어떻게 처리할 것인지에 대한 연구가 필요하다.
+
