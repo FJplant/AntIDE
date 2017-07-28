@@ -1,0 +1,135 @@
+
+Issued 4 semantic warnings compiling "C:/WORK/ant/source/com/antsoft/ant/util/AnonyEventHandlerListDlg.java":
+
+   326.        setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+               <---------------------------------------------->
+*** Caution: Ambiguous reference to member named "setLayout" inherited from type "java/awt/Container" but also declared or inherited in the enclosing type "com/antsoft/ant/util/AnonyEventHandlerListDlg". Explicit qualification is required
+
+
+   327.        setFont(new Font("DialogInput", Font.PLAIN, 12));
+               <---------------------------------------------->
+*** Caution: Ambiguous reference to member named "setFont" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/util/AnonyEventHandlerListDlg". Explicit qualification is required
+
+
+   353.          setBackground(isSelected ? sbc : dbc);
+                 <----------------------------------->
+*** Caution: Ambiguous reference to member named "setBackground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/util/AnonyEventHandlerListDlg". Explicit qualification is required
+
+
+   354.          setForeground(isSelected ? sfc : dfc);
+                 <----------------------------------->
+*** Caution: Ambiguous reference to member named "setForeground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/util/AnonyEventHandlerListDlg". Explicit qualification is required
+
+Issued 1 semantic warning compiling "C:/WORK/ant/source/com/antsoft/ant/designer/codeeditor/CodePopup.java":
+
+   530.        setLayout(new BorderLayout());
+               <--------------------------->
+*** Caution: Ambiguous reference to member named "setLayout" inherited from type "java/awt/Container" but also declared or inherited in the enclosing type "com/antsoft/ant/designer/codeeditor/CodePopup". Explicit qualification is required
+
+Issued 4 semantic warnings compiling "C:/WORK/ant/source/com/antsoft/ant/util/EventHandlerListDlg.java":
+
+   405.        setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+               <---------------------------------------------->
+*** Caution: Ambiguous reference to member named "setLayout" inherited from type "java/awt/Container" but also declared or inherited in the enclosing type "com/antsoft/ant/util/EventHandlerListDlg". Explicit qualification is required
+
+
+   406.        setFont(new Font("DialogInput", Font.PLAIN, 12));
+               <---------------------------------------------->
+*** Caution: Ambiguous reference to member named "setFont" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/util/EventHandlerListDlg". Explicit qualification is required
+
+
+   432.          setBackground(isSelected ? sbc : dbc);
+                 <----------------------------------->
+*** Caution: Ambiguous reference to member named "setBackground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/util/EventHandlerListDlg". Explicit qualification is required
+
+
+   433.          setForeground(isSelected ? sfc : dfc);
+                 <----------------------------------->
+*** Caution: Ambiguous reference to member named "setForeground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/util/EventHandlerListDlg". Explicit qualification is required
+
+Found 1 semantic error compiling "C:/WORK/ant/source/com/antsoft/ant/compiler/DirectedGraph.java":
+
+    97. 		      public void visit( Node v ) {
+                                                      ^
+*** Error: Duplicate declaration of local variable "v"
+
+Issued 1 semantic warning compiling "C:/WORK/ant/source/com/antsoft/ant/browser/sourcebrowser/SourceBrowser.java":
+
+   211. 	public SourceBrowser SourceBrowser() {
+                       <------------------------->
+*** Warning: The name of this method "SourceBrowser" matches the name of the containing class. However, the method is not a constructor since it contains a return type
+
+Issued 1 semantic warning compiling "C:/WORK/ant/source/com/antsoft/ant/manager/projectmanager/ProjectPanel.java":
+
+   133.   public ProjectPanel ProjectPanel() {
+                 <----------------------->
+*** Warning: The name of this method "ProjectPanel" matches the name of the containing class. However, the method is not a constructor since it contains a return type
+
+Found 1 semantic error compiling "C:/WORK/ant/source/com/antsoft/ant/browser/filebrowser/FileBrowser.java":
+
+    70.     } catch (Exception e) {
+                     <--------->
+*** Error: This catch block may be unreachable because there is no exception whose type is assignable to "java/lang/Exception" that can be thrown during execution of the body of the try block
+
+Issued 2 semantic warnings compiling "C:/WORK/ant/source/com/antsoft/ant/designer/codeeditor/ParamPopup.java":
+
+   331.          setLayout(new FlowLayout(FlowLayout.LEFT,0,1));
+                 <-------------------------------------------->
+*** Caution: Ambiguous reference to member named "setLayout" inherited from type "java/awt/Container" but also declared or inherited in the enclosing type "com/antsoft/ant/designer/codeeditor/ParamPopup". Explicit qualification is required
+
+
+   333.          setBackground(backColor);
+                 <---------------------->
+*** Caution: Ambiguous reference to member named "setBackground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/designer/codeeditor/ParamPopup". Explicit qualification is required
+
+Issued 4 semantic warnings compiling "C:/WORK/ant/source/com/antsoft/ant/wizard/Wizard.java":
+
+   283.       setBackground(Color.white);
+              <------------------------>
+*** Caution: Ambiguous reference to member named "setBackground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/wizard/Wizard". Explicit qualification is required
+
+
+   292.       setLayout(new BorderLayout(0,5));
+              <------------------------------>
+*** Caution: Ambiguous reference to member named "setLayout" inherited from type "java/awt/Container" but also declared or inherited in the enclosing type "com/antsoft/ant/wizard/Wizard". Explicit qualification is required
+
+
+   298.       setBackground(Color.white);
+              <------------------------>
+*** Caution: Ambiguous reference to member named "setBackground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/wizard/Wizard". Explicit qualification is required
+
+
+   308.       setLayout(new BorderLayout(3,0));
+              <------------------------------>
+*** Caution: Ambiguous reference to member named "setLayout" inherited from type "java/awt/Container" but also declared or inherited in the enclosing type "com/antsoft/ant/wizard/Wizard". Explicit qualification is required
+
+Issued 6 semantic warnings compiling "C:/WORK/ant/source/com/antsoft/ant/manager/projectmanager/AddToProjectDialog.java":
+
+   278.     	    setBackground(selBack);
+                    <-------------------->
+*** Caution: Ambiguous reference to member named "setBackground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/manager/projectmanager/AddToProjectDialog". Explicit qualification is required
+
+
+   279. 	        setForeground(selFore);
+                        <-------------------->
+*** Caution: Ambiguous reference to member named "setForeground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/manager/projectmanager/AddToProjectDialog". Explicit qualification is required
+
+
+   282.           setBackground(unselBack);
+                  <---------------------->
+*** Caution: Ambiguous reference to member named "setBackground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/manager/projectmanager/AddToProjectDialog". Explicit qualification is required
+
+
+   283.           setForeground(unselFore);
+                  <---------------------->
+*** Caution: Ambiguous reference to member named "setForeground" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/manager/projectmanager/AddToProjectDialog". Explicit qualification is required
+
+
+   306.         setEnabled(list.isEnabled());
+                <-------------------------->
+*** Caution: Ambiguous reference to member named "setEnabled" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/manager/projectmanager/AddToProjectDialog". Explicit qualification is required
+
+
+   307.         setFont(list.getFont());
+                <--------------------->
+*** Caution: Ambiguous reference to member named "setFont" inherited from type "javax/swing/JComponent" but also declared or inherited in the enclosing type "com/antsoft/ant/manager/projectmanager/AddToProjectDialog". Explicit qualification is required
