@@ -1,0 +1,100 @@
+<html>
+<head>
+<title>C:\Work\ant\source\com\antsoft\ant\tools\htmlgenerator\HtmlViewer.java</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<pre>
+<font color="#c0c0c0">/*
+ * $Header: /usr/cvsroot/AntIDE/source/com/antsoft/ant/tools/htmlgenerator/HtmlViewer.java,v 1.4 1999/08/19 04:31:48 multipia Exp $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 1.4 $
+ */</font>
+<font color="#000033">package</font> com.antsoft.ant.tools.htmlgenerator;
+
+<font color="#000033">import</font> javax.swing.*;
+<font color="#000033">import</font> javax.swing.event.*;
+<font color="#000033">import</font> java.io.*;
+<font color="#000033">import</font> java.net.*;
+<font color="#000033">import</font> java.awt.event.*;
+<font color="#000033">import</font> java.awt.*;
+<font color="#000033">import</font> java.util.Vector;
+
+<font color="#000033">import</font> com.antsoft.ant.main.MainFrame;
+<font color="#000033">import</font> com.antsoft.ant.util.WindowDisposer;
+
+<font color="#c0c0c0">/**
+ * Html Viewer
+ *
+ * @author kim sang kyun
+ */</font>
+<font color="#000033">public</font> <font color="#000033">class</font> HtmlViewer <font color="#000033">extends</font> JDialog
+{
+  <font color="#000033">private</font> JEditorPane pane;
+  <font color="#000033">private</font> JButton okBtn;
+
+  <font color="#000033">public</font> HtmlViewer(String fileName){
+    <font color="#000033">super</font>(MainFrame.mainFrame, fileName, false);
+
+        <font color="#c0c0c0">// register window event handler</font>
+        addWindowListener(WindowDisposer.getDisposer());
+        addKeyListener(WindowDisposer.getDisposer());       
+
+    <font color="#c0c0c0">//button panel</font>
+    okBtn = <font color="#000033">new</font> JButton(<font color="#ff0000">&quot;OK&quot;</font>);
+    okBtn.addActionListener(WindowDisposer.getDisposer());
+
+    pane = <font color="#000033">new</font> JEditorPane();
+    JScrollPane scrPane = <font color="#000033">new</font> JScrollPane(pane);
+    getContentPane().add(scrPane, BorderLayout.CENTER);
+    getContentPane().add(okBtn, BorderLayout.SOUTH);
+
+    <font color="#000033">try</font>{
+      pane.setPage(makeURL(fileName));
+      pane.setEditable(false);
+    }<font color="#000033">catch</font>(IOException e){}  
+
+    setSize(800, 800);
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    Dimension dlgSize = getSize();
+    <font color="#000033">if</font> (dlgSize.height &gt; screenSize.height) dlgSize.height = screenSize.height;
+    <font color="#000033">if</font> (dlgSize.width &gt; screenSize.width)   dlgSize.width = screenSize.width;
+    setLocation((screenSize.width - dlgSize.width) / 2,  (screenSize.height - dlgSize.height) / 2);
+
+  }
+
+  <font color="#000033">class</font> SafeLoader <font color="#000033">extends</font> Thread{
+    <font color="#000033">private</font> JEditorPane pane;
+    <font color="#000033">private</font> URL url;
+    <font color="#000033">public</font> SafeLoader(JEditorPane pane, URL url){
+      <font color="#000033">this</font>.pane = pane;
+      <font color="#000033">this</font>.url = url;
+    }
+
+    <font color="#000033">public</font> <font color="#000033">void</font> run(){
+      <font color="#000033">try</font>{
+        pane.setPage(url);
+      }<font color="#000033">catch</font>(IOException e){e.printStackTrace();}
+    }
+  }
+
+
+  <font color="#000033">private</font> URL makeURL(String fileName){
+    File html = <font color="#000033">new</font> File(fileName);
+    URL ret = null;
+
+    <font color="#000033">try</font>{
+      ret = <font color="#000033">new</font> URL(<font color="#ff0000">&quot;file://///&quot;</font>+html.getAbsolutePath());
+    }<font color="#000033">catch</font>(MalformedURLException e){
+      e.printStackTrace();
+    }
+    <font color="#000033">return</font> ret;
+  }
+}
+</pre>
+</body>
+</html>

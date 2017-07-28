@@ -1,0 +1,239 @@
+/*
+ * $Header: /AntIDE/source/ant/runner/ServletOptionPanel.java 3     99-05-26 1:52a Itree $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $History: ServletOptionPanel.java $
+ * 
+ * *****************  Version 3  *****************
+ * User: Itree        Date: 99-05-26   Time: 1:52a
+ * Updated in $/AntIDE/source/ant/runner
+ * dialog 추가
+ */
+package com.antsoft.ant.runner;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+
+import com.antsoft.ant.util.BorderList;
+import com.antsoft.ant.util.FontList;
+
+/**
+ * Servlet Path Panel
+ *
+ * @autoor Lee Chul Mok
+ */
+
+public class ServletOptionPanel extends JPanel {
+
+    private JTextField portTfl,logTfl,maxTfl,timeoutTfl,directoryTfl,propertyTfl;
+    private JButton portBtn,logBtn,maxBtn,timeoutBtn,directoryBtn,propertyBtn;
+    private JFrame parent;
+
+    public ServletOptionPanel(JFrame parent) {
+      this.parent = parent;
+      try {
+        jbInit();
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    void jbInit() throws Exception {
+      setLayout(new BorderLayout());
+      setBorder(BorderList.etchedBorder5);
+
+      ActionListener al = new ActionHandler();
+
+      // port panel
+      JLabel portLbl = new JLabel(" -p  port", JLabel.LEFT);
+      portLbl.setForeground(Color.black);
+      JPanel portLblP = new JPanel(new BorderLayout());
+      portLblP.add(portLbl, BorderLayout.WEST);
+
+      portLbl.setHorizontalAlignment(SwingConstants.LEFT);
+      portTfl = new JTextField(20);
+      portBtn = new JButton("Default");
+      portBtn.setActionCommand("PORT");
+      portBtn.addActionListener(al);
+
+      portTfl.setText("8080"); // default value;
+      portBtn.setEnabled(false);
+
+      JPanel portP = new JPanel(new BorderLayout());
+      portP.add(portTfl, BorderLayout.CENTER);
+      portP.add(portBtn, BorderLayout.EAST);
+      portP.setBorder(BorderList.lightLoweredBorder);
+
+      // backup log panel
+      JLabel logLbl = new JLabel(" -b  backup log", JLabel.LEFT);
+      logLbl.setForeground(Color.black);
+      JPanel logLblP = new JPanel(new BorderLayout());
+      logLblP.add(logLbl, BorderLayout.WEST);
+
+      logLbl.setHorizontalAlignment(SwingConstants.LEFT);
+      logTfl = new JTextField(20);
+      logBtn = new JButton("Default");
+      logBtn.setActionCommand("LOG");
+      logBtn.addActionListener(al);
+
+      logTfl.setText("50"); // default value;
+      logBtn.setEnabled(false);
+
+      JPanel logP = new JPanel(new BorderLayout());
+      logP.add(logTfl, BorderLayout.CENTER);
+      logP.add(logBtn, BorderLayout.EAST);
+      logP.setBorder(BorderList.lightLoweredBorder);
+
+      // max handlers
+      JLabel maxLbl = new JLabel(" -m  max handlers", JLabel.LEFT);
+      maxLbl.setForeground(Color.black);
+      JPanel maxLblP = new JPanel(new BorderLayout());
+      maxLblP.add(maxLbl, BorderLayout.WEST);
+
+      maxLbl.setHorizontalAlignment(SwingConstants.LEFT);
+      maxTfl = new JTextField(20);
+      maxBtn = new JButton("Default");
+      maxBtn.setActionCommand("MAX");
+      maxBtn.addActionListener(al);
+
+      maxTfl.setText("100"); // default value;
+      maxBtn.setEnabled(false);
+
+      JPanel maxP = new JPanel(new BorderLayout());
+      maxP.add(maxTfl, BorderLayout.CENTER);
+      maxP.add(maxBtn, BorderLayout.EAST);
+      maxP.setBorder(BorderList.lightLoweredBorder);
+
+      // timeout
+      JLabel timeoutLbl = new JLabel(" -t  timeout", JLabel.LEFT);
+      timeoutLbl.setForeground(Color.black);
+      JPanel timeoutLblP = new JPanel(new BorderLayout());
+      timeoutLblP.add(timeoutLbl, BorderLayout.WEST);
+
+      timeoutLbl.setHorizontalAlignment(SwingConstants.LEFT);
+      timeoutTfl = new JTextField(20);
+      timeoutBtn = new JButton("Default");
+      timeoutBtn.setActionCommand("TIMEOUT");
+      timeoutBtn.addActionListener(al);
+
+      timeoutTfl.setText("5000"); // default value;
+      timeoutBtn.setEnabled(false);
+
+      JPanel timeoutP = new JPanel(new BorderLayout());
+      timeoutP.add(timeoutTfl, BorderLayout.CENTER);
+      timeoutP.add(timeoutBtn, BorderLayout.EAST);
+      timeoutP.setBorder(BorderList.lightLoweredBorder);
+
+      // directory
+      JLabel directoryLbl = new JLabel(" -d  document directory", JLabel.LEFT);
+      directoryLbl.setForeground(Color.black);
+      JPanel directoryLblP = new JPanel(new BorderLayout());
+      directoryLblP.add(directoryLbl, BorderLayout.WEST);
+
+      directoryLbl.setHorizontalAlignment(SwingConstants.LEFT);
+      directoryTfl = new JTextField(20);
+      directoryBtn = new JButton("Browser");
+      directoryBtn.setActionCommand("DIRECTORY");
+      directoryBtn.addActionListener(al);
+
+      directoryTfl.setText(".\\examples"); // default value;
+      //directoryBtn.setEnabled(false);
+
+      JPanel directoryP = new JPanel(new BorderLayout());
+      directoryP.add(directoryTfl, BorderLayout.CENTER);
+      directoryP.add(directoryBtn, BorderLayout.EAST);
+      directoryP.setBorder(BorderList.lightLoweredBorder);
+
+      // servlet property
+      JLabel propertyLbl = new JLabel(" -s  servlet property", JLabel.LEFT);
+      propertyLbl.setForeground(Color.black);
+      JPanel propertyLblP = new JPanel(new BorderLayout());
+      propertyLblP.add(propertyLbl, BorderLayout.WEST);
+
+      propertyLbl.setHorizontalAlignment(SwingConstants.LEFT);
+      propertyTfl = new JTextField(20);
+      propertyBtn = new JButton("Browser");
+      propertyBtn.setActionCommand("PROPERTY");
+      propertyBtn.addActionListener(al);
+
+      propertyTfl.setText(".\\examples\\servlet.properties"); // default value;
+      //propertyBtn.setEnabled(false);
+
+      JPanel propertyP = new JPanel(new BorderLayout());
+      propertyP.add(propertyTfl, BorderLayout.CENTER);
+      propertyP.add(propertyBtn, BorderLayout.EAST);
+      propertyP.setBorder(BorderList.lightLoweredBorder);
+
+      Box box = Box.createVerticalBox();
+      box.add(portLblP);
+      box.add(portP);
+      box.add(logLblP);
+      box.add(logP);
+      box.add(maxLblP);
+      box.add(maxP);
+      box.add(timeoutLblP);
+      box.add(timeoutP);
+      box.add(directoryLblP);
+      box.add(directoryP);
+      box.add(propertyLblP);
+      box.add(propertyP);
+
+      add(box, BorderLayout.CENTER);
+      add(new JPanel(), BorderLayout.WEST);
+      add(new JPanel(), BorderLayout.EAST);
+      add(new JPanel(), BorderLayout.NORTH);
+      add(new JPanel(), BorderLayout.SOUTH);
+    }
+
+    // 버튼이 눌려 졌을때 발생하는 이벤트 핸들러
+  public void portBtnSelected() {
+
+  }
+  public void logBtnSelected() {
+
+  }
+  public void maxBtnSelected() {
+
+  }
+  public void timeoutBtnSelected() {
+
+  }
+  public void directoryBtnSelected() {
+
+  }
+  public void propertyBtnSelected() {
+
+  }
+
+  class ActionHandler implements ActionListener {
+    public void actionPerformed(ActionEvent e) {
+      String cmd = e.getActionCommand();
+
+      if (cmd.equals("PORT")) {
+        portBtnSelected();
+      }
+      else if (cmd.equals("LOG")) {
+        logBtnSelected();
+      }
+      else if (cmd.equals("MAX")) {
+        maxBtnSelected();
+      }
+      else if (cmd.equals("TIMEOUT")) {
+        timeoutBtnSelected();
+      }
+      else if (cmd.equals("DIRECTORY")) {
+        directoryBtnSelected();
+      }
+      else if (cmd.equals("PROPERTY")) {
+        propertyBtnSelected();
+      }
+    }
+  }
+}
