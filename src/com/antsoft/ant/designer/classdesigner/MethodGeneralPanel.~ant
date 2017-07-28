@@ -1,0 +1,401 @@
+/*
+ * $Header: /AntIDE/source/ant/designer/classdesigner/MethodGeneralPanel.java 4     99-05-20 4:57p Remember $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 4 $
+ * $History: MethodGeneralPanel.java $
+ * 
+ * *****************  Version 4  *****************
+ * User: Remember     Date: 99-05-20   Time: 4:57p
+ * Updated in $/AntIDE/source/ant/designer/classdesigner
+ * 
+ * *****************  Version 3  *****************
+ * User: Multipia     Date: 99-05-16   Time: 11:44p
+ * Updated in $/AntIDE/source/ant/designer/classdesigner
+ * 
+ * *****************  Version 2  *****************
+ * User: Remember     Date: 99-05-06   Time: 2:46p
+ * Updated in $/AntIDE/source/ant/designer/classdesigner
+ *
+ * *****************  Version 8  *****************
+ * User: Remember     Date: 98-10-10   Time: 3:17a
+ * Updated in $/JavaProjects/src/ant/designer/classdesigner
+ * com.sun.java -> javax
+ * 
+ * *****************  Version 7  *****************
+ * User: Remember     Date: 98-09-23   Time: 6:35a
+ * Updated in $/JavaProjects/src/ant/designer/classdesigner
+ * Class 이름 바꾸었음.
+ *
+ * *****************  Version 6  *****************
+ * User: Remember     Date: 98-09-22   Time: 12:43a
+ * Updated in $/JavaProjects/src/ant/designer/classdesigner
+ * ClassName 바뀜, 전체적으로 Dialog 처리방식 바뀜
+ *
+ * *****************  Version 5  *****************
+ * User: Remember     Date: 98-09-18   Time: 10:28p
+ * Updated in $/JavaProjects/src/ant/designer/classdesigner
+ * 
+ * *****************  Version 4  *****************
+ * User: Remember     Date: 98-09-16   Time: 12:03p
+ * Updated in $/JavaProjects/src/ant/designer/classdesigner
+ *
+ * *****************  Version 3  *****************
+ * User: Remember     Date: 98-09-15   Time: 3:07a
+ * Updated in $/JavaProjects/src/ant/designer/classdesigner
+ *
+ * *****************  Version 2  *****************
+ * User: Remember     Date: 98-09-07   Time: 10:07p
+ * Updated in $/Ant/src/ant/designer/classdesigner
+ * package name 변경
+ *
+ * *****************  Version 1  *****************
+ * User: Remember     Date: 98-09-03   Time: 12:59a
+ * Created in $/Ant/src
+ * Attrubute add GUI
+ *
+ */
+package com.antsoft.ant.designer.classdesigner;
+
+import java.awt.*;
+import java.util.Vector;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+
+
+/**
+ * @author  Kim sang kyun
+ */
+public class MethodGeneralPanel extends JPanel {
+  private JRadioButton publicRBtn, protectedRBtn, privateRBtn, packageRBtn;
+  private JTextField nameTf, returntypeTf, docTf;
+  private JCheckBox staticCbox, finalCbox, syncCbox, abstractCbox, nativeCbox;
+  private ButtonGroup accessTypeBtnGrp;
+  private Vector docM;
+  private JComboBox javaDocCombo;
+  private JavaDocInfo javaDoc = new JavaDocInfo();
+
+  public MethodGeneralPanel() {
+    try  {
+      jbInit();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void jbInit() throws Exception {
+    BorderLayout thisL = new BorderLayout();
+    this.setLayout(thisL);
+
+    ActionListener actionEventHandler = new ActionEventHandler();
+    DocumentListener documentEventHandler = new DocumentEventHandler();
+
+    //////////////////////// FIRST LINE //////////////////////////
+    //access type label
+    JLabel accessTypeLbl = new JLabel("Access Type");
+
+    //public, protected, private radio button
+    accessTypeBtnGrp = new ButtonGroup();
+    publicRBtn = new JRadioButton("public");
+    publicRBtn.setActionCommand("Public");
+    publicRBtn.setSelected(true);
+    publicRBtn.setToolTipText("public access modifier setting");
+    accessTypeBtnGrp.add(publicRBtn);
+
+    protectedRBtn = new JRadioButton("protected");
+    protectedRBtn.setActionCommand("Protected");
+    protectedRBtn.setToolTipText("protected access modifier setting");
+    accessTypeBtnGrp.add(protectedRBtn);
+
+    privateRBtn = new JRadioButton("private");
+    privateRBtn.setActionCommand("Private");
+    privateRBtn.setToolTipText("private access modifier setting");
+    accessTypeBtnGrp.add(privateRBtn);
+
+    packageRBtn = new JRadioButton("package");
+    packageRBtn.setActionCommand("Package");
+    packageRBtn.setToolTipText("package access modifier setting");
+    accessTypeBtnGrp.add(packageRBtn);
+
+    //Top Right panel
+    JPanel topRightP = new JPanel();
+
+    FlowLayout topRightPL = new FlowLayout();
+    topRightP.setLayout(topRightPL);
+    topRightP.add(publicRBtn);
+    topRightP.add(protectedRBtn);
+    topRightP.add(privateRBtn);
+    topRightP.add(packageRBtn);
+
+    //Top panel
+    JPanel topP = new JPanel();
+    FlowLayout topL = new FlowLayout(FlowLayout.LEFT);
+    topP.setLayout(topL);
+    topP.add(accessTypeLbl);
+    topP.add(topRightP);
+
+    //Top rapper panel
+    JPanel topRapP = new JPanel();
+    BorderLayout topRapL = new BorderLayout();
+    topRapP.setLayout(topRapL);
+    topRapP.add(topP, BorderLayout.WEST);
+    topRapP.add(new JPanel(), BorderLayout.CENTER);
+
+    JLabel modLbl = new JLabel("Modifier");
+    staticCbox = new JCheckBox("static");
+    finalCbox = new JCheckBox("final");
+    abstractCbox = new JCheckBox("abstract");
+    nativeCbox = new JCheckBox("native");
+    syncCbox = new JCheckBox("synchronized");
+
+
+    //panel1
+    JPanel cbxP = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    cbxP.add(modLbl);
+    cbxP.add(staticCbox);
+    cbxP.add(finalCbox);
+    cbxP.add(abstractCbox);
+    cbxP.add(nativeCbox);
+    cbxP.add(syncCbox);
+
+    Box box = Box.createVerticalBox();
+    box.add(topRapP);
+    box.add(cbxP);
+
+    /////////////////////////SECOND LINE //////////////////////
+
+    //labels
+    JLabel nameLbl = new JLabel("Name :        ");
+
+    JLabel returnLbl = new JLabel("ReturnType :        ");
+
+    //label panel
+    JPanel lblP = new JPanel(new GridLayout(2,1));
+    lblP.add(nameLbl);
+    lblP.add(returnLbl);
+
+    nameTf = new JTextField(20);
+    returntypeTf = new JTextField(20);
+
+    //textfield panel
+    JPanel tfP = new JPanel(new GridLayout(2,1));
+    tfP.add(nameTf);
+    tfP.add(returntypeTf);
+
+    //setP, checkP
+    JPanel centerP = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    centerP.add(lblP);
+    centerP.add(tfP);
+
+    //javadoc
+    docM = new Vector();
+    docM.addElement("JavaDoc");
+    docM.addElement("Desc");
+    docM.addElement("See");
+    docM.addElement("Since");
+    docM.addElement("Depricated");
+    docM.addElement("Return");
+
+    javaDocCombo = new JComboBox(docM);
+    javaDocCombo.setSelectedItem(docM.elementAt(0));
+    javaDocCombo.setActionCommand("JavaDoc");
+    javaDocCombo.addActionListener(actionEventHandler);
+
+    docTf = new JTextField(40);
+    docTf.getDocument().putProperty("TYPE", "JAVADOC");
+    docTf.getDocument().addDocumentListener(documentEventHandler);
+    docTf.setText("JavaDoc Comment Setting");
+    docTf.setEditable(false);
+
+    JPanel docP = new JPanel();
+    BorderLayout docL = new BorderLayout();
+
+    docL.setHgap(10);
+    docL.setVgap(5);
+
+    docP.setLayout(docL);
+    docP.add(javaDocCombo, BorderLayout.WEST);
+    docP.add(docTf, BorderLayout.CENTER);
+
+    //top3
+    JPanel top3P = new JPanel(new BorderLayout());
+    top3P.add(box, BorderLayout.NORTH);
+    top3P.add(centerP, BorderLayout.CENTER);
+    top3P.add(docP, BorderLayout.SOUTH);
+
+    ///////////////////////DESC PART/////////////////////////////////////
+    //Desc label
+    JLabel descLbl = new JLabel("Description");
+
+    //Desc panel
+    JPanel descP = new JPanel();
+    BorderLayout descL = new BorderLayout();
+    descP.setLayout(descL);
+    descP.add(descLbl, BorderLayout.WEST);
+
+    this.add(new JPanel(), BorderLayout.WEST);
+    this.add(top3P, BorderLayout.CENTER);
+    this.add(new JPanel(), BorderLayout.EAST);
+  }
+
+  public String getAccessType(){
+    ButtonModel model = accessTypeBtnGrp.getSelection();
+    String comm = model.getActionCommand();
+    String accessType = "";
+
+    if(comm.equals("Public")){
+      accessType = "public";
+    }
+    else if(comm.equals("Protected")){
+      accessType = "protected";
+    }
+    else if(comm.equals("Private")){
+      accessType = "private";
+    }
+    else if(comm.equals("Package")){
+      accessType = "";
+    }
+
+    return accessType;
+  }
+
+  public String getName(){
+    return nameTf.getText();
+  }
+
+  public String getReturnType(){
+    return returntypeTf.getText();
+  }
+
+  public String getModifierStr(){
+    String str = "";
+    if(getStatic()) str += "static ";
+    if(getAbstract()) str += "abstract ";
+    if(getFinal()) str += "final ";
+
+    return str;
+  }
+
+  public boolean getStatic(){
+    return staticCbox.isSelected();
+  }
+
+  public boolean getAbstract(){
+    return abstractCbox.isSelected();
+  }
+
+  public boolean getNative(){
+    return nativeCbox.isSelected();
+  }
+
+  public boolean getFinal(){
+    return finalCbox.isSelected();
+  }
+
+  public boolean getSync(){
+    return syncCbox.isSelected();
+  }
+
+  public JavaDocInfo getJavaDoc(){
+    return this.javaDoc;
+  }
+
+  public void restoreData(boolean isStatic, boolean isFinal, boolean isSync, boolean isAbstract,
+                          boolean isNative, String accessType, String returnType, String name, JavaDocInfo javaDoc){
+    if(accessType.equals("public")){
+      publicRBtn.setSelected(true);
+    }else if(accessType.equals("protected")){
+      protectedRBtn.setSelected(true);
+    }else if(accessType.equals("private")){
+      privateRBtn.setSelected(true);
+    }
+
+    nameTf.setText(name);
+    returntypeTf.setText(returnType);
+    staticCbox.setSelected(isStatic);
+    finalCbox.setSelected(isFinal);
+    syncCbox.setSelected(isSync);
+    abstractCbox.setSelected(isAbstract);
+    nativeCbox.setSelected(isNative);
+
+    this.javaDoc = javaDoc;
+  }
+
+
+  class DocumentEventHandler implements DocumentListener{
+    public void process(DocumentEvent e){
+      String type = (String)e.getDocument().getProperty("TYPE");
+      if(type.equals("JAVADOC")){
+        String item = (String)javaDocCombo.getSelectedItem();
+
+        if(item.equals("Desc") && !docTf.getText().equals("")){
+           javaDoc.setDescription(docTf.getText());
+        }
+        else if(item.equals("See") && !docTf.getText().equals("")){
+           javaDoc.setSee(docTf.getText());
+        }
+        else if(item.equals("Since") && !docTf.getText().equals("")){
+           javaDoc.setSince(docTf.getText());
+        }
+        else if(item.equals("Depricated") && !docTf.getText().equals("")){
+           javaDoc.setDepricated(docTf.getText());
+        }
+        else if(item.equals("Return") && !docTf.getText().equals("")){
+           javaDoc.setReturn(docTf.getText());
+        }
+        else if(item.equals("Desc") && !docTf.getText().equals("")){
+           javaDoc.setDescription(docTf.getText());
+        }
+      }
+    }
+
+    public void insertUpdate(DocumentEvent e){ process(e);  }
+
+    public void changedUpdate(DocumentEvent e){ process(e); }
+
+    public void removeUpdate(DocumentEvent e){ process(e); }
+  }
+
+    //Action event handler
+  class ActionEventHandler implements ActionListener {
+    private String actionCommand;
+    public void actionPerformed(ActionEvent e){
+      actionCommand = e.getActionCommand();
+      if(actionCommand.equals("JavaDoc")){
+        String item = (String)javaDocCombo.getSelectedItem();
+
+        if(item.equals("See")){
+          docTf.setEditable(true);
+          docTf.setText(javaDoc.getSee());
+        }
+        else if(item.equals("Since")){
+          docTf.setEditable(true);
+          docTf.setText(javaDoc.getSince());
+        }
+        else if(item.equals("Desc")){
+          docTf.setEditable(true);
+          docTf.setText(javaDoc.getDescription());
+        }
+        else if(item.equals("Depricated")){
+          docTf.setEditable(true);
+          docTf.setText(javaDoc.getDepricated());
+        }
+        else if(item.equals("Return")){
+          docTf.setEditable(true);
+          docTf.setText(javaDoc.getReturns());
+        }
+        else if(item.equals("JavaDoc")){
+          docTf.setEditable(false);
+          docTf.setText("JavaDoc Comment Setting");
+        }
+      }
+    }
+  }
+}
+

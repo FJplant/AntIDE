@@ -1,0 +1,163 @@
+/*
+ * $Header: /AntIDE/source/ant/designer/codeeditor/StatusBar.java 10    99-05-17 12:17a Multipia $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 10 $
+ * $History: StatusBar.java $
+ * *****************  Version 3  *****************
+ * User: Strife       Date: 99-05-07   Time: 5:56p
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * 출력 위치 조정
+ *
+ * *****************  Version 2  *****************
+ * User: Strife       Date: 99-05-06   Time: 2:00a
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * 라인 출력 관련 수정
+ *
+ * *****************  Version 1  *****************
+ * User: Insane       Date: 98-09-12   Time: 5:16p
+ * Created in $/Ant/src/ant/designer/codeeditor
+ * 자바 프로그래밍용 텍스트 편집기
+ *
+ */
+package com.antsoft.ant.designer.codeeditor;
+
+import java.awt.*;
+import javax.swing.*;
+import com.antsoft.ant.util.BorderList;
+
+/**
+ *  class EditorStatusBar
+ *
+ *  @author Jinwoo Baek
+ *  @author kim sang kyun
+ */
+public class EditorStatusBar extends JPanel {
+  JLabel lblLineCount = new JLabel();
+  JLabel lblColCount = new JLabel();
+  JLabel lblTotalLine = new JLabel();
+  JLabel lblReadOnly = new JLabel();
+  JLabel lblIsModified = new JLabel();
+  JLabel lblInsertMode = new JLabel();
+
+  public EditorStatusBar() {
+    try  {
+      jbInit();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void jbInit() throws Exception {
+    setLayout(new FlowLayout(FlowLayout.RIGHT, 1,1));
+
+    lblLineCount.setBorder(BorderList.lightLoweredBorder);
+    lblLineCount.setPreferredSize(new Dimension(70, 15));
+    lblLineCount.setHorizontalAlignment(JLabel.CENTER);
+    lblLineCount.setForeground(Color.black);
+
+    lblColCount.setBorder(BorderList.lightLoweredBorder);
+    lblColCount.setPreferredSize(new Dimension(70, 15));
+    lblColCount.setHorizontalAlignment(JLabel.CENTER);
+    lblColCount.setForeground(Color.black);
+
+    lblTotalLine.setBorder(BorderList.lightLoweredBorder);
+    lblTotalLine.setPreferredSize(new Dimension(40, 15));
+    lblTotalLine.setHorizontalAlignment(JLabel.CENTER);
+    lblTotalLine.setForeground(Color.black);
+
+    lblReadOnly.setBorder(BorderList.lightLoweredBorder);
+    lblReadOnly.setPreferredSize(new Dimension(80, 15));
+    lblReadOnly.setHorizontalAlignment(JLabel.CENTER);
+    lblReadOnly.setForeground(Color.black);
+
+    lblIsModified.setBorder(BorderList.lightLoweredBorder);
+    lblIsModified.setPreferredSize(new Dimension(80, 15));
+    lblIsModified.setHorizontalAlignment(JLabel.CENTER);
+    lblIsModified.setForeground(Color.black);
+
+    lblInsertMode.setBorder(BorderList.lightLoweredBorder);
+    lblInsertMode.setPreferredSize(new Dimension(80, 15));
+    lblInsertMode.setHorizontalAlignment(JLabel.CENTER);
+    lblInsertMode.setForeground(Color.black);
+
+    add(lblLineCount);
+    add(lblColCount);
+    add(lblTotalLine);
+    add(lblReadOnly);
+    add(lblIsModified);
+    add(lblInsertMode);
+
+    lblLineCount.setText("ln 1");
+    lblColCount.setText("col 1");
+    lblTotalLine.setText("1");
+
+    lblReadOnly.setText("Read Only");
+    lblReadOnly.setForeground(Color.gray);
+    lblIsModified.setText("Modified");
+    lblIsModified.setForeground(Color.gray);
+
+    setPreferredSize(new Dimension(100, 17));
+  }
+
+  public boolean isModified() {
+
+    if(lblIsModified.getForeground() == Color.black) return true;
+    else return false;
+  }
+
+  public boolean isInsertMode() {
+    if(lblInsertMode.getText().equals("Insert")) return true;
+    else return false;
+  }
+
+  public boolean isReadOnlyMode() {
+    if(lblReadOnly.getForeground() == Color.black) return true;
+    else return false;
+  }
+
+  public void setModified(boolean modified) {
+    if (modified) {
+      lblIsModified.setForeground(Color.black);
+    }
+    else {
+      lblIsModified.setForeground(Color.gray);
+    }
+  }
+
+  public void setInsertMode(boolean mode) {
+    if (mode) {
+      lblInsertMode.setText("Insert");
+    }
+    else {
+      lblInsertMode.setText("Overwrite");
+    }
+  }
+
+  public void setReadOnlyMode(boolean mode) {
+    if (mode) {
+      lblReadOnly.setForeground(Color.black);
+    }
+    else {
+      lblReadOnly.setForeground(Color.gray);
+    }
+  }
+
+  public void setLineCount(int row, int col, int lineCount) {
+    if ((row > 0) && (col >= 0)) {
+      lblLineCount.setText("ln " + row);
+      lblColCount.setText("col " + col);
+      lblTotalLine.setText(lineCount+"");
+    }
+    else {
+      lblLineCount.setText("ln 1");
+      lblColCount.setText("col 1");
+      lblTotalLine.setText("1");
+    }
+  }
+ }

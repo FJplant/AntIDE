@@ -1,0 +1,346 @@
+/*
+ * $Header: $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: $
+ * $History: $
+ */
+
+package com.antsoft.ant.designer.codeeditor;
+
+import java.awt.*;
+import javax.swing.*;
+import java.util.*;
+
+import com.antsoft.ant.manager.projectmanager.*;
+import com.antsoft.ant.util.BorderList;
+import com.antsoft.ant.main.MainFrame;
+import com.antsoft.ant.pool.sourcepool.*;
+
+/**
+ *  class EditorPane
+ *  TODO: ProjectExplorer에 있는 Editor 관련 필드 및 메소드들을 이곳으로 옮기도록
+ *        한다.
+ *  @author Kwon, Young Mo
+ */
+public class EditorPane extends JPanel {
+  // Opened File list
+  private Vector openedList = new Vector(15, 5);
+  private Vector openedListForSaveAll = new Vector(15, 5);
+
+  // 가장 최근에 오픈되었던 source
+  private SourceEntry lastOpenedSource;
+
+  private TextViewPanel upperTvp, bottomTvp;
+  private Point upperTvpPosition, bottomTvpPosition;
+
+  // for GUI
+  private JSplitPane vertSP;
+
+  private EditorStatusBar statusBar = new EditorStatusBar();
+  private ProjectExplorer projectExplorer;
+
+  public EditorPane( ProjectExplorer explorer ) {
+    projectExplorer = explorer;
+
+  	setLayout( new BorderLayout() );
+
+  	vertSP = new JSplitPane(JSplitPane.VERTICAL_SPLIT, null, null);
+  	add( new JLabel("[Opened File List will be here...]"), BorderLayout.NORTH );
+  	add( vertSP, BorderLayout.CENTER );
+  	statusBar.setVisible( false );
+  	add( statusBar, BorderLayout.SOUTH );
+
+  	vertSP.setDividerSize(4);
+  	vertSP.setOneTouchExpandable(true);
+  }
+
+	/**
+	 *  Source를 보여준다
+	 *
+	 *  @param se 보여줄 소스
+	 *  @param modifiable 열 파일을 수정할 수 있도록 할건지 선택
+	 */
+  public void openDocument(SourceEntry se, boolean modifiable) {
+    TextViewPanel focusedTvp = null;
+
+    statusBar.setVisible(true);
+    //아래 경우들은 처음으로 오픈을 할때를 나타낸다. 이럴경우 같은 파일을
+    //위아래에 뿌려준다
+    if(sp2.getTopComponent() == null) {
+
+      int location = sp2.getDividerLocation();
+
+      upperTvp = new TextViewPanel(this, TextViewPanel.UPPER, statusBar);
+      upperTvp.setSourceEntry(se);
+
+      sp2.setTopComponent(upperTvp);
+      sp2.setDividerLocation(location);
+
+      location = sp2.getDividerLocation();
+      bottomTvp = new TextViewPanel(this, TextViewPanel.BOTTOM, statusBar);
+      bottomTvp.setSourceEntry(se);
+
+      sp2.setBottomComponent(bottomTvp);
+      sp2.setDividerLocation(location);
+
+      focusedTvp = bottomTvp;
+    }
+    else{
+      focusedTvp = getCurrentTvp();
+      focusedTvp.setSourceEntry(se);
+    }
+
+    if (!modifiable) focusedTvp.getEditor().setEditable(false);
+    else focusedTvp.getEditor().setEditable(true);
+
+    boolean found = false;
+
+    ProjectFileEntry pf = project.getFileEntry(se.getPath(), se.getName());
+    for (int i = 0; i < openedList.size(); i++) {
+      ProjectFileEntry pfe = (ProjectFileEntry)openedList.elementAt(i);
+      if (pfe != null && pfe.equals(pf)) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      openedList.addElement(pf);
+      openedListForSaveAll.addElement(pf);
+    }
+
+    fileSelected(se);
+    mainFrm.setCaptionText(project.getProjectName() + " - "	+ se.getPath() + File.separator + se.getName());
+
+    //가장 최근에 오픈된 source를 갱신한다
+    lastOpenedSource = se;
+  }
+
+	/**
+	 *  소스 파일을 에디터에 연다
+	 */
+  public void openDocument(String pathName, String fileName, boolean modifiable) {
+    SourceEntry se = sourcePool.getSource(pathName, fileName);
+    if (se != null) openDocument(se, modifiable);
+ }
+
+
+  /**
+   * 위, 아래 TextViewPanel을 화면에서 제거하고 sourcepool에서는 제거하지 않는다 (Side Effect때문)
+   * source browser내용도 제거한다
+   */
+  public void closeDocument() {
+    if(sp2.getTopComponent() != null) sp2.remove(upperTvp);
+    if(sp2.getBottomComponent() != null) sp2.remove(bottomTvp);
+    if(sourceBrowser != null) sourceBrowser.clear();
+    statusBar.setVisible(false);
+  }
+
+////////////////////////// 저장 관련 시작 /////////////////////////////////////
+
+	/**
+	 *  세이브를 수행한다.
+   *
+   *  @return saved file
+	 */
+	public String save() {
+
+    String savedFile = null;
+    TextViewPanel focusedTvp = getCurrentTvp();
+  	if (focusedTvp != null) {
+    	SourceEntry se = focusedTvp.getSourceEntry();
+      if (se != null)	{
+        save(se);
+        savedFile = se.getFullPathName();
+      }
+    }
+
+    return savedFile;
+	}
+
+  /**
+   * Mainframe의 save all menu가 선택되었을때 동작
+   */
+  public int saveAll(){
+    int savedCount=0;
+		for (int i = 0; i < openedListForSaveAll.size(); i++) {
+			ProjectFileEntry pfe = (ProjectFileEntry)openedListForSaveAll.elementAt(i);
+			SourceEntry se = sourcePool.getSource(pfe);
+      if(se.isModified()){
+  		  se.saveFile();
+        pfe.syncLastModifiedTimeWithRealFile();
+        mainFrm.getCodeContext().modifyTableWhenSaveFile(true);
+        savedCount++;
+      }
+    }
+    return savedCount;
+  }
+
+	/**
+	 *  지정한 파일을 세이브한다.
+	 */
+  public void save(SourceEntry se) {
+    se.saveFile();
+    ProjectFileEntry pfe = project.getFileEntry(se.getPath(), se.getName());
+    pfe.syncLastModifiedTimeWithRealFile();
+    if (mainFrm != null) mainFrm.getCodeContext().modifyTableWhenSaveFile(true);
+  }
+
+	/**
+	 *  Save As를 수행한다.
+	 */
+  public String saveAs() {
+
+    String savedFile = null;
+
+    TextViewPanel focusedTvp = getCurrentTvp();
+    if(focusedTvp == null) return null;
+
+    SourceEntry se = focusedTvp.getSourceEntry();
+    ProjectFileEntry pfe = project.getFileEntry(se.getPath(), se.getName());
+    if (se != null && pfe != null) {
+      FileDialog dlg = new FileDialog(mainFrm);
+      dlg.setMode(FileDialog.SAVE);
+      dlg.setDirectory(se.getPath());
+      dlg.setFile(se.getName());
+      dlg.show();
+      String file = dlg.getFile();
+      if (file != null) {
+        String directory = dlg.getDirectory();
+        se.setFile(directory, file, true);
+        project.removeFile(pfe);
+        projectPanel.removeNode(pfe);
+        File f = new File(directory, file);
+        ProjectFileEntry newFE = new ProjectFileEntry(f.getParent(), f.getName());
+        project.addFile(newFE);
+        projectPanel.addFileToProject(newFE);
+        project.isModified = true;
+        se.saveFile();
+        openDocument(pfe.getPath(), pfe.getName(), true);
+        projectPanel.repaint();
+
+        savedFile= se.getFile().getAbsolutePath();
+      }
+    }
+
+    return savedFile;
+  }
+
+  ////////////////////////// 저장 관련 끝 /////////////////////////////////////
+
+	/** COPY action */
+  public void copy() {
+    TextViewPanel focusedTvp = getCurrentTvp();
+    if (focusedTvp != null) focusedTvp.copy();
+  }
+
+	/** CUT action */
+  public void cut() {
+    TextViewPanel focusedTvp = getCurrentTvp();
+    if (focusedTvp != null) focusedTvp.cut();
+  }
+
+	/** PASTE action */
+  public void paste() {
+    TextViewPanel focusedTvp = getCurrentTvp();
+    if (focusedTvp != null) focusedTvp.paste();
+  }
+
+	/** UNDO action */
+  public void undo() {
+    TextViewPanel focusedTvp = getCurrentTvp();
+    if (focusedTvp != null) focusedTvp.undo();
+  }
+
+	/** REDO action */
+  public void redo() {
+    TextViewPanel focusedTvp = getCurrentTvp();
+    if (focusedTvp != null) focusedTvp.redo();
+  }
+
+	/**
+	 *  가장 최근에 오픈된  소스를 반환한다
+	 *
+	 *  @return SourceEntry 현재 열린 소스
+	 */
+	public SourceEntry getLastOpenedSource() {
+    return lastOpenedSource;
+	}
+
+  /**
+   * 포커스를 얻은 TextViewPanel의 source와 최근에 선택된 파일이
+   * 다를때, 그 source가 트리에서 선택된 효과를 준다
+   */
+  public void focusOfTextViewPanelChanged(SourceEntry focusedSE){
+    if(lastOpenedSource != focusedSE){
+      fileSelected(focusedSE);
+      lastOpenedSource = focusedSE;
+
+      bottomTvp.hidePopups();
+      upperTvp.hidePopups();
+    }
+
+    else if(upperTvp.getSourceEntry() == bottomTvp.getSourceEntry()){
+      bottomTvp.hidePopups();
+      upperTvp.hidePopups();
+    }
+  }
+
+  /**
+   * 현재 포커스를 얻은 TextViewPanel을 반환
+   */
+  public TextViewPanel getCurrentTvp(){
+    return (TextViewPanel.focusedPosition.equals(TextViewPanel.UPPER) ? upperTvp : bottomTvp);
+  }
+
+  public Vector getTotalOpenedList(){
+    return openedList;
+  }
+
+  /**
+   * 외부에서 파일이 변경되었는지를 체크한다
+   */
+  public void checkExternalFileUpdate(){
+    Vector allFiles = project.getFiles();
+
+    if(allFiles == null) return;
+    for(int i=0; i<allFiles.size(); i++){
+      ProjectFileEntry pfe = (ProjectFileEntry)allFiles.elementAt(i);
+      File f = new File(pfe.getPath(), pfe.getName());
+      if(pfe.isExternallyChanged()){
+
+        int op = JOptionPane.showConfirmDialog(mainFrm, f.getAbsolutePath() +
+                                  " is updated. Reload it?",
+                                  "Externally Updated", JOptionPane.YES_NO_OPTION);
+
+        if (op == JOptionPane.YES_OPTION) {
+          SourceEntry newEntry = sourcePool.getSourceWhenExternallyUpdated(pfe);
+          if(newEntry != null){
+            if(getCurrentTvp().getSourceEntry().equals(newEntry)) {
+              System.out.println("SetSource Entry");
+
+              // sourcebrowser의 내용을 지운다
+              sourceBrowser.clear();
+              sourceBrowser.setSourceName(newEntry.getName());
+
+
+              mainFrm.getCodeContext().setSourceEntry(newEntry);
+            }
+
+            if(newEntry.equals(upperTvp.getSourceEntry())) upperTvp.setSourceEntry(newEntry);
+            if(newEntry.equals(bottomTvp.getSourceEntry())) bottomTvp.setSourceEntry(newEntry);
+          }
+        }
+        else{
+          SourceEntry.syncWithBuffer(pfe.getPath(), pfe.getName());
+        }
+        pfe.syncLastModifiedTimeWithRealFile();
+      }
+    }
+  }
+}

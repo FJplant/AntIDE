@@ -1,0 +1,1190 @@
+/*
+ * $Header: /AntIDE/source/ant/designer/codeeditor/TextViewPanel.java 75    99-05-29 1:55p Itree $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 75 $
+ * $History: TextViewPanel.java $
+ * 
+ * *****************  Version 75  *****************
+ * User: Itree        Date: 99-05-29   Time: 1:55p
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * 
+ * *****************  Version 74  *****************
+ * User: Kahn         Date: 99-05-29   Time: 10:24a
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * 
+ * *****************  Version 73  *****************
+ * User: Itree        Date: 99-05-28   Time: 4:08p
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * modify, save 부분 수정.. openSourcePanel에 기능 추가
+ * 
+ * *****************  Version 72  *****************
+ * User: Remember     Date: 99-05-28   Time: 2:45p
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * 
+ * *****************  Version 71  *****************
+ * User: Remember     Date: 99-05-26   Time: 9:56a
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * 
+ * *****************  Version 70  *****************
+ * User: Strife       Date: 99-05-25   Time: 2:52p
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * StatusBar 관련 수정
+ * 
+ * *****************  Version 69  *****************
+ * User: Multipia     Date: 99-05-24   Time: 8:36p
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * Opaque로 설정
+ * 
+ * *****************  Version 68  *****************
+ * User: Remember     Date: 99-05-23   Time: 8:10a
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * 
+ * *****************  Version 67  *****************
+ * User: Multipia     Date: 99-05-23   Time: 3:41a
+ * Updated in $/AntIDE/source/ant/designer/codeeditor
+ * EditorStatusBar를 한 개만 출력하도록 수정
+ * *****************  Version 1  *****************
+ * User: Insane       Date: 98-09-12   Time: 5:16p
+ * Created in $/Ant/src/ant/designer/codeeditor
+ * 자바 프로그래밍용 텍스트 편집기
+ *
+ */
+package com.antsoft.ant.designer.codeeditor;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.text.*;
+import java.util.Vector;
+import java.util.StringTokenizer;
+import java.util.Hashtable;
+import java.util.Enumeration;
+
+import com.antsoft.ant.main.*;
+import com.antsoft.ant.manager.projectmanager.*;
+import com.antsoft.ant.pool.sourcepool.*;
+import com.antsoft.ant.property.*;
+import com.antsoft.ant.property.defaultproperty.*;
+import com.antsoft.ant.util.MyCaret;
+import com.antsoft.ant.util.Constants;
+import com.antsoft.ant.util.AnonyEventHandlerListDlg;
+import com.antsoft.ant.util.HierarchyWindow;
+
+/**
+ *  class TextViewPanel
+ *
+ *  @author Jinwoo Baek
+ *  @ahthor kim sang kyun
+ */
+public class TextViewPanel extends JPanel{
+  // Swing Component Attributes
+  private JEditorPane editor = new JEditorPane();
+  private JavaEditorKit kit = new JavaEditorKit();
+	private EditorStatusBar sBar;
+	private JScrollPane scroller;
+	private JViewport vp;
+  private OpenSourcePanel osp;
+  // Data Attributes
+  private String fileName, pathName;
+  private SourceEntry sourceEntry = null;
+  private ProjectExplorer pe = null;
+  private String fontName = "Courier";
+  private Action copyAction, cutAction, pasteAction;
+  private int fontSize = 12;
+  private int current_line = 1;
+  private int current_column = 1;
+	private int current_dot = 0;
+	private int positionToInsert = 0;
+	private Rectangle caretCoords = null;
+
+  // popup menu
+  private JPopupMenu editorPopup = new JPopupMenu();
+  private JMenuItem copy = new JMenuItem("Copy");
+  private JMenuItem cut = new JMenuItem("Cut");
+  private JMenuItem paste = new JMenuItem("Paste");
+  private JMenuItem undo = new JMenuItem("Undo");
+  private JMenuItem redo = new JMenuItem("Redo");
+  private JMenuItem compile = new JMenuItem("Compile...");
+  private JMenuItem anony = new JMenuItem("Add Anonymous Class");
+  private JMenuItem hierarchy = new JMenuItem("Show Hierarchy");
+  private Font f;
+
+  // Find & Replace Dlg
+  private FindTextDialog ftdlg = null;
+  private ReplaceTextDialog rtdlg = null;
+  private GotoLineDlg gldlg = null;
+
+  /////////// static popups /////////////
+  public CodePopup popup;
+  public ParamPopup paramPopup;
+  public HierarchyWindow hierarWindow = new HierarchyWindow();
+
+  private TextReplacer textReplacer;
+  private TextFinder textFinder;
+
+  private DocumentListener documentHandler = new DocumentEventHandler();
+
+  public static final String UPPER = "upper";
+  public static final String BOTTOM = "bottom";
+
+  //위에 것인지 아래것인지를 나타낸다
+  private String tvpPosition;
+  public static String focusedPosition = BOTTOM;
+
+  //break point ui
+  private BreakPointBar breakPointBar = new BreakPointBar();
+  private HighLightManager hManager = new HighLightManager();
+
+
+  // for CodeEditor
+  public TextViewPanel() { jbInit(); }
+
+  // for TabbedCodeEditor
+  public TextViewPanel(ProjectExplorer pe, String position, EditorStatusBar statusBar, OpenSourcePanel osp ) {
+    this.pe = pe;
+    setTvpPosition(position);
+    sBar = statusBar;
+    this.osp = osp;
+    jbInit();
+  }
+
+  protected void finalize() {
+  	if (sourceEntry != null) {
+    	sourceEntry.getDocument().removeDocumentListener(documentHandler);
+    }
+  }
+  // ---------------- End of Constructors -------------------------------
+
+
+  void jbInit(){
+    setLayout(new BorderLayout());
+    setAutoscrolls(true);
+    setOpaque(true);
+
+    //finder, replacer 생성
+    textReplacer = new TextReplacer(editor);
+    textFinder = new TextFinder(editor);
+
+    //event handler 생성
+    KeyListener keyHandlerForEditor = new EditorKeyEventHandler();
+    MouseListener mouseHandlerForEditor = new EditorMouseEventHandler();
+    FocusListener focusHandlerForEditor = new EditorFocusEventHandler();
+    ActionListener actionHandler = new ActionEventHandler();
+    CaretListener caretHandler = new CaretEventHandler();
+
+    editor.addKeyListener(keyHandlerForEditor);
+    editor.addMouseListener(mouseHandlerForEditor);
+    editor.addFocusListener(focusHandlerForEditor);
+    editor.addCaretListener(caretHandler);
+
+    editor.setCaret(new MyCaret());
+   	MyCaret caret = (MyCaret)editor.getCaret();
+   	sBar.setInsertMode(caret.getMode());
+		editor.setMinimumSize(new Dimension(150, 0));
+ 		editor.setEditorKitForContentType("text/java", kit);
+		editor.setContentType("text/java; charset=KSC5601");
+		editor.setBackground(Color.white);
+		editor.setFont(new Font(fontName, Font.PLAIN, fontSize));
+		editor.setEditable(true);
+		editor.setBorder(null);
+   	editor.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+
+    // ------------------------ Setting for Text Action ------------------------
+    Action[] actions = kit.getActions();
+    for (int i = 0; i < actions.length; i++) {
+      if (actions[i].getValue(Action.NAME).toString().equals("cut-to-clipboard")) {
+        cutAction = actions[i];
+      } else if (actions[i].getValue(Action.NAME).toString().equals("copy-to-clipboard")) {
+        copyAction = actions[i];
+      } else if (actions[i].getValue(Action.NAME).toString().equals("paste-from-clipboard")) {
+        pasteAction = actions[i];
+      }
+    }
+    // -------------- End of Setting for Text Action ---------------------------
+
+    copy.addActionListener(actionHandler);
+    cut.addActionListener(actionHandler);
+    paste.addActionListener(actionHandler);
+    undo.addActionListener(actionHandler);
+    redo.addActionListener(actionHandler);
+    compile.addActionListener(actionHandler);
+    anony.addActionListener(actionHandler);
+    hierarchy.addActionListener(actionHandler);
+
+    // ------------------- End of Event Handler --------------------------------
+
+    //break point UI관련
+    JPanel editorWithBreak = new JPanel(new BorderLayout());
+    editorWithBreak.add(breakPointBar, BorderLayout.WEST);
+    editorWithBreak.add(editor, BorderLayout.CENTER);
+
+    scroller = new JScrollPane(editorWithBreak);
+    vp = scroller.getViewport();
+    vp.setBackingStoreEnabled(false);
+    // 스크롤 속도 향상을 위해서 Window Blitting 사용 by Kwon, Young Mo
+    vp.putClientProperty("EnableWindowBlit", Boolean.TRUE);
+    
+    add(scroller, BorderLayout.CENTER);
+//    add(sBar, BorderLayout.SOUTH);
+		editor.setSize(200, editor.getSize().height);
+
+    //popup 생성
+    popup = new CodePopup(MainFrame.mainFrame, this, scroller);
+    paramPopup = new ParamPopup(MainFrame.mainFrame, this, scroller);
+
+
+    // for Popup Menu
+    f = new Font(editorPopup.getFont().getName(), Font.BOLD, 12);
+    compile.setFont(f);
+    copy.setFont(f);
+    cut.setFont(f);
+    paste.setFont(f);
+    undo.setFont(f);
+    redo.setFont(f);
+    anony.setFont(f);
+    hierarchy.setFont(f);
+    editorPopup.add(compile);
+    editorPopup.addSeparator();
+    editorPopup.add(copy);
+    editorPopup.add(cut);
+    editorPopup.add(paste);
+    editorPopup.addSeparator();
+    editorPopup.add(undo);
+    editorPopup.add(redo);
+    editorPopup.addSeparator();
+    editorPopup.add(anony);
+    editorPopup.add(hierarchy);
+
+    // ------------------- setting for Syntax Highlighting ---------------------
+ 		reloadEnvironment();
+    // ---------------- End of setting for Syntax Highlighting ----------------
+
+		editor.registerKeyboardAction(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				pe.save();
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_S, java.awt.Event.CTRL_MASK),
+		JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		editor.registerKeyboardAction(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				undo();
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_Z, java.awt.Event.CTRL_MASK),
+		JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		editor.registerKeyboardAction(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				redo();
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_R, java.awt.Event.CTRL_MASK),
+		JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		editor.registerKeyboardAction(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				pe.getMainFrame().getCodeContext().activateContextSensitiveHelp(editor.getCaretPosition());
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),
+		JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		editor.registerKeyboardAction(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				pe.getMainFrame().getCodeContext().viewJdkSource(editor.getCaretPosition());
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0),
+		JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		editor.registerKeyboardAction(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				if (sourceEntry != null) {
+        	if (pe != null) pe.compileFile(sourceEntry.getPath(), sourceEntry.getName());
+				}
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_F10, java.awt.Event.CTRL_MASK),
+		JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		editor.registerKeyboardAction(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				pe.buildProject();
+			}
+		}, KeyStroke.getKeyStroke(KeyEvent.VK_F9, java.awt.Event.CTRL_MASK),
+		JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+  }
+
+  public void findString(boolean isDialogShow){
+    textFinder.do_Action(sourceEntry, vp, isDialogShow);
+  }
+
+  public void replaceString(boolean isDialogShow){
+    textReplacer.do_Action(sourceEntry, vp, isDialogShow);
+  }
+
+  public void setSourceEntry(SourceEntry newSourceEntry){
+
+  	editor.setDocument(newSourceEntry.getDocument());
+
+    if(this.sourceEntry != null) {
+      //이 소스에 대한 에디터의 위치를 기억시킨다
+      sourceEntry.setLastPosInTextViewPanel(vp.getViewPosition());
+      sourceEntry.getDocument().removeDocumentListener(documentHandler);
+      hidePopups();
+    }
+
+    sourceEntry = newSourceEntry;
+    fileName = sourceEntry.getName();
+    pathName = sourceEntry.getPath();
+    sourceEntry.getDocument().addDocumentListener(documentHandler);
+
+  	editor.setSize(editor.getWidth(), editor.getHeight() + 100);
+    sBar.setLineCount(1, 1, sourceEntry.getNumOfLines());
+
+    //이 소스에 대한 에디터의 위치를 복원한다. editor 변경이 일어나면 잘 안된다
+    scroller.getViewport().setViewPosition(sourceEntry.getLastPosInTextViewPanel());
+  }
+
+
+	/**
+	 *  Syntax Colouring 관련 변수를 리셋한다.
+	 */
+	public void reloadEnvironment() {
+		try {
+
+			Color string = Main.property.getColor(ColorPanel.STRING);
+			if (string == null) string = new Color(0, 0, 0);
+			Color background = Main.property.getColor(ColorPanel.BACKGROUND);
+			if (background == null) background = new Color(255, 255, 255);
+			Color keyword = Main.property.getColor(ColorPanel.KEYWORD);
+			if (keyword == null) keyword = new Color(0, 0, 255);
+			Color comment = Main.property.getColor(ColorPanel.COMMENT);
+			if (comment == null) comment = new Color(0, 153, 0);
+			Color constant = Main.property.getColor(ColorPanel.CONSTANT);
+			if (constant == null) constant = new Color(255, 0, 0);
+			Font font = Main.property.getSelectedFont();
+			if (font == null) font = new Font("Courier", Font.PLAIN, 12);
+
+			editor.setForeground(string);
+			editor.setBackground(background);
+			editor.setFont(font);
+    	JavaContext styles = kit.getStylePreferences();
+			Style s;
+
+			for (int code = 0; code < 70; code++) {
+				s = styles.getStyleForScanValue(code);
+				if (s != null) StyleConstants.setForeground(s, string);
+			}
+
+			for (int code = 131; code < 150; code++) {
+				s = styles.getStyleForScanValue(code);
+				if (s != null) StyleConstants.setForeground(s, string);
+			}
+
+
+			s = styles.getStyleForScanValue(Token.COMMENT.getScanValue());
+			StyleConstants.setForeground(s, comment);
+			s = styles.getStyleForScanValue(Token.STRINGVAL.getScanValue());
+
+// --------------- my code
+		//StyleConstants.setForeground(s, new Color(255, 0, 0));
+			StyleConstants.setForeground(s, constant);
+    	s = styles.getStyleForScanValue(Token.INTVAL.getScanValue());
+			StyleConstants.setForeground(s, constant);
+    //StyleConstants.setForeground(s, new Color(255, 0, 0));
+// --------------- end of my code
+
+		//Color keyword = new Color(102, 102, 255);
+		//Color keyword = new Color(0, 0, 255);
+    	s = styles.getStyleForScanValue(Token.NEW.getScanValue());
+    	StyleConstants.setForeground(s, keyword);
+    	s = styles.getStyleForScanValue(Token.THROWS.getScanValue());
+    	StyleConstants.setForeground(s, keyword);
+    	s = styles.getStyleForScanValue(Token.INSTANCEOF.getScanValue());
+    	StyleConstants.setForeground(s, keyword);
+			for (int code = 70; code <= 130; code++) {
+				s = styles.getStyleForScanValue(code);
+				if (s != null) {
+					StyleConstants.setForeground(s, keyword);
+        	StyleConstants.setFontFamily(s, fontName);
+        	StyleConstants.setBold(s, true);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			//System.err.println("Error : " + e.toString());
+		}
+		repaint();
+	}
+
+  /**
+   * file 선택이 달라졌을때 사라지도록 하기 위함
+   */
+  public void hidePopups(){
+    if(popup.isVisible()) popup.setVisible(false);
+    if(paramPopup.isVisible()) paramPopup.setVisible(false);
+  }
+
+  /**
+   *
+   * status bar의 참조를 얻는다
+   */
+  public EditorStatusBar getEditorStatusBar(){
+    return sBar;
+  }
+
+
+	/**
+	 *  에디터를 얻는다.
+	 */
+  public JEditorPane getEditor() {
+    return editor;
+  }
+
+  /**
+   * View Port를 얻는다. Code Popup, Param Popup에서 위치 잡는데 사용
+   */
+  public JViewport getViewPort(){
+    return vp;
+  }
+
+	/**
+	 *  에디터 킷을 얻는다.
+	 */
+  public DefaultEditorKit getEditorKit() {
+    return kit;
+  }
+
+	/**
+	 *  현재 에디터의 소스를 얻는다.
+	 */
+  public SourceEntry getSourceEntry() {
+    return sourceEntry;
+  }
+
+	/**
+	 *  현 소스의 파일 Path 를 얻는다.
+	 */
+  public String getPath() {
+    return sourceEntry.getPath();
+  }
+
+	/**
+	 *  현 소스의 파일 이름을 얻는다.
+	 */
+  public String getSourceName() {
+    return sourceEntry.getName();
+  }
+
+	/**
+	 *  현 소스의 케럿 위치의 라인을 얻는다.
+	 */
+  public int getCurrentLine() {
+    return current_line;
+  }
+
+	/**
+	 *  현 소스의 케럿 위치의 컬럼을 얻는다.
+	 */
+  public int getCurrentColumn() {
+    return current_column;
+  }
+
+  /**
+   * 위의 것인지 아래것인지를 설정한다
+   */
+  public void setTvpPosition(String position) {
+  	tvpPosition = position;
+  }
+
+  /**
+   * 위의 것인지 아래것인지를 알려준다
+   */
+  public String getTvpPosition(){
+    return tvpPosition;
+  }
+
+	/**
+	 *  현재 선택된 부분을 클립보드로 카피한다.
+	 */
+  public void copy() {
+    if (copyAction != null) copyAction.actionPerformed(null);
+  }
+
+	/**
+	 *  현재 선택된 부분을 잘라내서 클립보드로 넣는다.
+	 */
+  public void cut() {
+    if (cutAction != null) cutAction.actionPerformed(null);
+  }
+
+	/**
+	 *  클립보드의 내용을 현 케럿의 위치에 붙여넣는다.
+	 */
+  public void paste() {
+    if (pasteAction != null) pasteAction.actionPerformed(null);
+  }
+
+	/**
+	 *  가장 최근에 취한 행동을 취소한다.
+	 */
+  public void undo() {
+    if (sourceEntry != null) sourceEntry.undo();
+  }
+
+	/**
+	 *  가장 최근에 취소한 행동을 다시 실행한다.
+	 */
+  public void redo() {
+    if (sourceEntry != null) sourceEntry.redo();
+  }
+
+  /**
+   *  현 콤포넌트에 포커스가 오도록 요청할 때 에디터에 포커스가 가도록 한다.
+   */
+  public void requestFocus() {
+    editor.requestFocus();
+  }
+
+	/**
+	 *  특정 위치로 caret을 이동시킨다.
+	 */
+	public void moveCaret(int offset, boolean highlight) {
+  	try {
+			editor.setCaretPosition(offset);
+    } catch (Exception e) {
+    	System.err.println("TextViewPanel : " + e);
+    }
+
+    if(highlight) hManager.setLine(offset);
+    else hManager.clearLine();
+
+		try {
+			Rectangle rect = editor.modelToView(offset);
+			int coord_y = vp.getExtentSize().height / 2;
+			coord_y = rect.y - coord_y;
+			if (coord_y < 0) coord_y = 0;
+			vp.setViewPosition(new Point(0, coord_y));
+      vp.repaint();
+		} catch (BadLocationException e) {
+			System.err.println("TextViewPanel : " + e);
+		} catch (Exception e) {
+    }
+	}
+
+	/**
+	 *  케럿을 특정라인의 맨 처음으로 오도록 한다.
+	 */
+	public void moveLine(int line, boolean highlight) {
+		Element el = sourceEntry.getElementAt(line);
+  	if (el != null) moveCaret(el.getStartOffset(), highlight);
+    else JOptionPane.showMessageDialog(this, "Out of Range by Line", "Go to Line", JOptionPane.ERROR_MESSAGE);
+	}
+
+  public void gotoLine(Frame owner) {
+  	if (gldlg == null) gldlg = new GotoLineDlg(owner);
+		Point p = this.getAccessibleContext().getAccessibleComponent().getLocationOnScreen();
+		gldlg.setLocation(p.x + 30, p.y + 30);
+   	gldlg.setVisible(true);
+    if (gldlg.isOk()) {
+    	int i = gldlg.getLineNumber();
+      if (i > 0) moveLine(i - 1, false);
+      else
+      	JOptionPane.showMessageDialog(this, "Out of Range by Line", "Go to Line", JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  public Rectangle getCaretCoords(){
+    return caretCoords;
+  }
+
+  public int getCurrentDot(){
+    return this.current_dot;
+  }
+
+	/**
+	 *  실제로 Intelligence를 보여준다.
+	 *
+	 *  @param eventData 리스트에 들어갈 데이터
+	 *  @param owner 윈도우를 찍을 때 owner Window가 필요하다.
+	 */
+	public synchronized void showIntellisense(Vector eventData, Frame owner) {
+    if(!popup.isVisible()) {
+      popup.setIntelliData(eventData, sourceEntry.getDocument());
+      popup.showWindow(editor);
+    }
+  }
+
+	/**
+	 *  실제로 Parameterizing을 보여준다.
+	 *
+	 *  @param eventData 리스트에 들어갈 데이터
+	 *  @param owner 윈도우를 찍을 때 owner Window가 필요하다.
+	 */
+
+	public synchronized void showParameterizing(Vector eventData, Frame owner) {
+     if(!paramPopup.isVisible()) {
+       paramPopup.setParamData(eventData, sourceEntry.getDocument());
+       paramPopup.showWindow(editor);
+     }
+	}
+
+  public void setDocument(JavaDocument doc) {
+    // PENDING(prinz) This should have a customizer and
+		// be serialized.  This is a bogus initialization.
+    editor.setDocument(doc);
+		reloadEnvironment();
+  }
+
+
+
+  class BreakPointBar extends JLabel implements MouseListener{
+
+    public BreakPointBar(){
+      super();
+      setPreferredSize(new Dimension(15, 1));
+      addMouseListener(this);
+    }
+
+    public void paint(Graphics g){
+      for(Enumeration e=sourceEntry.getBreakPoints().keys(); e.hasMoreElements(); ){
+        Integer lineObj = (Integer)e.nextElement();
+        int line = lineObj.intValue();
+        int ypos = hManager.getYpos(line);
+        if(ypos == -1) return;
+
+        g.setColor(Color.red);
+        g.fillArc(4, ypos, 8, 8, 0, 360);
+      }
+    }
+
+    public void mousePressed(MouseEvent e){
+      int offset = editor.viewToModel(new Point(0, e.getY()));
+      hManager.addBreakPoint(offset);
+      repaint();
+    }
+
+    public void mouseReleased(MouseEvent e){}
+    public void mouseEntered(MouseEvent e){}
+    public void mouseExited(MouseEvent e){}
+    public void mouseClicked(MouseEvent e){}
+  }
+
+  class BreakPointInfo {
+    private int line;
+    private String lineText;
+    private Object obj;
+
+    public BreakPointInfo(int line, String lineText, Object obj){
+      this.line = line;
+      this.lineText = lineText;
+      this.obj = obj;
+    }
+
+    public int getLineNum(){
+      return line;
+    }
+
+    public String getText(){
+      return lineText;
+    }
+
+    public Object getObj(){
+      return obj;
+    }  
+
+    public String toString(){
+      if(line >=0 && line < 10) return "000000"+line;
+      else if(line >=10 && line < 100) return "00000"+line;
+      else if(line >=100 && line < 1000) return "0000"+line;
+      else if(line >=1000 && line < 10000) return "000"+line;
+      else if(line >=10000 && line < 100000) return "00"+line;
+      else return ""+line;
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////
+
+	class LineHighlighter implements Highlighter.HighlightPainter {
+    private Color highLightC, breakC;
+    private int lineNo = -1;
+    private Rectangle mRect;
+    private int mHeight;
+
+    public LineHighlighter(){
+      highLightC = Color.cyan;
+      breakC = Color.red;
+    }
+
+    public void setLineNum(int lineNo){
+      this.lineNo = lineNo;
+    }
+
+    public int getLineNum(){
+      return lineNo;
+    }
+
+    public int getYpos(int line){
+      if(mRect==null) return -1;
+      else return mRect.y + mHeight * line + mHeight/3;
+    }
+
+		public void paint(Graphics g, int p0, int p1, Shape bounds,	JTextComponent textComponent)	{
+
+			Document doc = editor.getDocument();
+			FontMetrics metrics = g.getFontMetrics();
+			Rectangle rect = (Rectangle)bounds;
+			int height = metrics.getHeight();
+			int x = rect.x;
+			int y = rect.y + height * lineNo;
+			g.setColor(highLightC);
+
+      mRect = rect;
+      mHeight = height;
+
+      if(lineNo != -1) g.fillRect(x, y, editor.getWidth(), height);
+
+      for(Enumeration e = sourceEntry.getBreakPoints().keys(); e.hasMoreElements(); ){
+        Integer line = (Integer)e.nextElement();
+        int num = line.intValue();
+  			y = rect.y + height * num;
+      	g.setColor(breakC);
+   			g.fillRect(x, y, editor.getWidth(), height);
+      }
+		}
+	}
+
+  class HighLightManager {
+
+  	private Object selObj = null;
+    private LineHighlighter lineHighlighter = new LineHighlighter();
+
+    public void addBreakPoint(int offset){
+			try	{
+   	    JavaDocument doc = sourceEntry.getDocument();
+      	Element root = doc.getDefaultRootElement();
+        int lineNo = root.getElementIndex(offset);
+
+    		Document doc2 = editor.getDocument();
+ 		    Element map = doc2.getDefaultRootElement();
+    		Element lineElement = map.getElement(lineNo);
+
+      	int start = lineElement.getStartOffset();
+  			int end = lineElement.getEndOffset();
+
+        BreakPointInfo bpi = (BreakPointInfo)sourceEntry.getBreakPoints().get(new Integer(lineNo));
+        if(bpi != null) {
+          Object prevObj = bpi.getObj();
+          sourceEntry.getBreakPoints().remove(new Integer(lineNo));
+          editor.getHighlighter().removeHighlight(prevObj);
+          lineHighlighter.setLineNum(-1);
+        }
+        else {
+          Object breakObj = editor.getHighlighter().addHighlight(0, 0, lineHighlighter);
+          Segment seg = new Segment();
+          doc2.getText(start, end-start, seg);
+          BreakPointInfo bp = new BreakPointInfo(lineNo, seg.toString().trim(), breakObj);
+          sourceEntry.getBreakPoints().put(new Integer(lineNo), bp);
+          lineHighlighter.setLineNum(-1);
+        }
+        vp.repaint();
+
+			} catch(BadLocationException bl) {
+				bl.printStackTrace();
+			}
+    }
+
+    public int getYpos(int line){
+      return lineHighlighter.getYpos(line);
+    }
+
+    public void setLine(int offset){
+			try	{
+   	    JavaDocument doc = sourceEntry.getDocument();
+      	Element root = doc.getDefaultRootElement();
+        int lineNo = root.getElementIndex(offset);
+        lineHighlighter.setLineNum(lineNo);
+
+    		Document doc2 = editor.getDocument();
+ 		    Element map = doc2.getDefaultRootElement();
+    		Element lineElement = map.getElement(lineNo);
+
+      	int start = lineElement.getStartOffset();
+  			int end = lineElement.getEndOffset();
+
+        if(selObj == null) selObj = editor.getHighlighter().addHighlight(0, 0, lineHighlighter);
+        else editor.getHighlighter().changeHighlight(selObj, start, end);
+
+
+			} catch(BadLocationException bl) {
+				bl.printStackTrace();
+			}
+    }
+
+    public void clearLine(){
+      if(selObj != null){
+        editor.getHighlighter().removeHighlight(selObj);
+        selObj = null;
+        vp.repaint();
+      }
+    }
+	}
+
+  /////////////////// inner classes /////////////////////////////////
+
+  /** DocumentEventHandelr Inner Class */
+  class DocumentEventHandler implements DocumentListener{
+    public void insertUpdate(DocumentEvent evt) {
+      try {
+        int offset = evt.getOffset();
+
+        PlainDocument doc=(PlainDocument)editor.getDocument();
+        Element element=doc.getParagraphElement(offset);
+        String string=doc.getText(element.getStartOffset(),
+                        element.getEndOffset()-element.getStartOffset());
+        int local=offset-element.getStartOffset();
+        char c=string.charAt(local);
+        if (c=='*') {
+          if (local-1>=0&&string.charAt(local-1)=='/') {
+            repaint();
+            return;
+          }
+          else if (local+1<string.length()&&string.charAt(local+1)=='/') {
+            repaint();
+            return;
+          }
+        }
+
+        if (c=='/') {
+          if (local+1<string.length()&&string.charAt(local+1)=='*') {
+            repaint();
+            return;
+          }
+          else if (local-1>=0&&string.charAt(local-1)=='*') {
+            repaint();
+            return;
+          }
+        }
+      } catch (BadLocationException e) {
+        System.out.println("TextViewPanel : "+e.toString());
+      }
+      sBar.setModified(sourceEntry.isModified());
+      osp.notifyModifiedSource(sourceEntry.isModified());
+      //repaint();
+    }
+
+    public void removeUpdate(DocumentEvent evt) {
+      // 즉각적인 coloring을 위해.... by kahn
+      repaint();
+      sBar.setModified(sourceEntry.isModified());
+      osp.notifyModifiedSource(sourceEntry.isModified());
+    }
+
+    public void changedUpdate(DocumentEvent evt) {
+      sBar.setModified(sourceEntry.isModified());
+      osp.notifyModifiedSource(sourceEntry.isModified());
+    }
+  }
+
+  /** ActionEventHandelr Inner Class */
+  class ActionEventHandler implements ActionListener{
+    public void actionPerformed(ActionEvent evt){
+      if (evt.getSource() == copy) {
+        if (copyAction != null) copyAction.actionPerformed(evt);
+      }
+      else if (evt.getSource() == cut) {
+        if (cutAction != null) {
+          cutAction.actionPerformed(evt);
+        }
+      }
+      else if (evt.getSource() == paste) {
+        if (pasteAction != null) pasteAction.actionPerformed(evt);
+      }
+      else if (evt.getSource() == undo) {
+        undo();
+      }
+      else if (evt.getSource() == redo) {
+        redo();
+      }
+      else if (evt.getSource() == compile) {
+        if (sourceEntry != null) {
+          if (pe != null) pe.compileFile(sourceEntry.getPath(), sourceEntry.getName());
+        }
+      }
+      else if (evt.getSource() == anony) {
+        if (sourceEntry != null) {
+          AnonyEventHandlerListDlg dlg = new AnonyEventHandlerListDlg();
+          dlg.showWindow();
+
+          if(dlg.isOK()){
+            try {
+              int offsetInserted = editor.getCaretPosition();
+              Element elem = sourceEntry.getDocument().getParagraphElement(offsetInserted);
+              sourceEntry.getDocument().insertString(offsetInserted, dlg.getGeneratedSource());
+
+              if(dlg.isBeautifyOn()) MainFrame.getCodeContext().indentDocument();
+            }catch (BadLocationException e) {
+              System.err.println(e);
+            }
+          }
+        }
+      }
+      else if (evt.getSource() == hierarchy) {
+        HierarchyWindow.currentFullClassName = pe.getMainFrame().getCodeContext().getFullClassNameAtCursor( editor.getCaretPosition() );
+        hierarWindow.showWindow(editor);
+      }
+    }
+  }
+
+  /** Editor FocusEventHandelr Inner Class */
+  class EditorFocusEventHandler extends FocusAdapter{
+    public void focusLost(FocusEvent evt) {
+      int old_selStart = editor.getSelectionStart();
+      int old_selEnd = editor.getSelectionEnd();
+//      editor.setSelectionStart(old_selStart);
+//      editor.setSelectionEnd(old_selEnd);
+    }
+
+    public void focusGained(FocusEvent evt) {
+      //현재 포커스가 있는 tvp를 설정한다
+      pe.checkExternalFileUpdate();
+      sBar.setInsertMode(((MyCaret)editor.getCaret()).getMode());
+
+      File f = sourceEntry.getFile();
+
+      //generated source from classdesigner
+      if(f != null){
+        if( !f.exists() ) editor.setEditable(true);
+        else editor.setEditable(f.canWrite());
+      }  
+
+      sBar.setModified(sourceEntry.isModified());
+      osp.notifyModifiedSource(sourceEntry.isModified());
+
+      sBar.setReadOnlyMode(!editor.isEditable());
+      editor.getCaret().setVisible(true);
+
+      if(!focusedPosition.equals(getTvpPosition())){
+        focusedPosition = getTvpPosition();
+        pe.focusOfTextViewPanelChanged(sourceEntry);
+      }
+    }
+  }
+
+ /** Editor MouseEventHandelr Inner Class */
+  class EditorMouseEventHandler extends MouseAdapter{
+
+    public void mouseReleased(MouseEvent evt) {
+      if(hierarWindow.isVisible()) hierarWindow.dispose();
+      editorPopup.setVisible(false);
+      if (evt.isPopupTrigger()) {
+        editorPopup.show(editor, evt.getX(), evt.getY());
+      }
+    }
+
+    public void mousePressed(MouseEvent evt) {
+      pe.setFocusedComponent(ProjectExplorer.TEXTVIEW_PANEL);
+    }
+  }
+
+  /** Editor KeyEventHandelr Inner Class */
+  class EditorKeyEventHandler extends KeyAdapter{
+
+    //for Ctrl-Space
+    private boolean typedOff = false;
+    public void keyTyped(KeyEvent evt){
+      if(typedOff) {
+        evt.consume();
+        typedOff = false;
+      }
+    }
+
+    public void keyPressed(KeyEvent evt) {
+
+      switch(evt.getKeyCode()) {
+
+      case KeyEvent.VK_ESCAPE :
+        if(hierarWindow != null && hierarWindow.isVisible())
+          hierarWindow.setVisible(false);
+        break;
+
+      case KeyEvent.VK_UP :
+      case KeyEvent.VK_DOWN :
+        if(popup.isVisible()) {
+          evt.consume();
+          return;
+        }
+        break;
+
+      case KeyEvent.VK_INSERT:
+        // copy action
+        if (evt.isControlDown()) {
+          copy();
+        }
+        // paste action
+        else if (evt.isShiftDown()) {
+          paste();
+        }
+        else if (sBar != null) {
+          MyCaret caret_sbar = (MyCaret)editor.getCaret();
+          sBar.setInsertMode(!caret_sbar.getMode());
+          ((JavaDocument)sourceEntry.getDocument()).setMode(!caret_sbar.getMode());
+          caret_sbar.setMode(!caret_sbar.getMode());
+        }
+        evt.consume();
+        break;
+      // cut action
+      case KeyEvent.VK_DELETE:
+        if (evt.isShiftDown()) {
+          cut();
+          evt.consume();
+        }
+        break;
+      case KeyEvent.VK_SPACE:
+        if (evt.isControlDown()) {
+          typedOff = true;
+          pe.getMainFrame().getCodeContext().thisCodeInsight(editor.getCaretPosition());
+          evt.consume();
+        }
+        break;
+      case KeyEvent.VK_F:
+        if (evt.isControlDown()) {
+          findString(true);
+          evt.consume();
+        }
+        break;
+      case KeyEvent.VK_J:
+        if (evt.isControlDown()) {
+          pe.gotoLine();
+          evt.consume();
+        }
+        break;
+      case KeyEvent.VK_R:
+        if (evt.isControlDown()) {
+          replaceString(true);
+          evt.consume();
+        }
+        break;
+      case KeyEvent.VK_F3:
+        findString(false);
+        evt.consume();
+        break;
+      case KeyEvent.VK_0:
+        if (evt.isShiftDown()) {
+          if ((popup != null) && (popup.isVisible())) {
+            popup.setVisible(false);
+          }
+          evt.consume();
+        }
+        break;
+      case KeyEvent.VK_PAGE_UP:
+        if(popup.isVisible()) {
+          evt.consume();
+          return;
+        }
+
+        Point p = vp.getViewPosition();
+        if (evt.isControlDown() || (p.y == 0)) {
+          moveLine(p.x, false);
+          evt.consume();
+        }
+        break;
+      case KeyEvent.VK_PAGE_DOWN:
+        if(popup.isVisible()) {
+          evt.consume();
+          return;
+        }
+
+        Point po = vp.getViewPosition();
+        Dimension d = vp.getViewSize();
+        if (evt.isControlDown() || (d.height == (po.y + vp.getExtentSize().height))) {
+          moveLine(sourceEntry.getNumOfLines() - 1, false);
+          vp.setViewPosition(new Point(po.x, d.height - vp.getExtentSize().height));
+          evt.consume();
+        }
+
+        break;
+      // for auto Indent
+      case KeyEvent.VK_ENTER:
+        if(popup.isVisible()) {
+          evt.consume();
+          return;
+        }
+
+        if (editor.isEditable()) {
+          JavaDocument doc = sourceEntry.getDocument();
+          int offset = editor.getCaretPosition();
+          Element prevLine = doc.getParagraphElement(offset);
+          try {
+            String str = doc.getText(prevLine.getStartOffset(),
+                              prevLine.getEndOffset() - prevLine.getStartOffset() - 1);
+            StringTokenizer token = new StringTokenizer(str);
+            String temp = null;
+
+            //java document에서는 개행문자가 system에 의존하는것이 아니라
+            //무조건 '\n'이다
+            if (token.hasMoreTokens()) {
+              temp = token.nextToken();
+              int i = str.indexOf(temp);
+              if (i > 0)
+                doc.insertString(offset, "\n" + str.substring(0, i));
+              else if (i < 0)
+                doc.insertString(offset, "\n" + str);
+              else
+                doc.insertString(offset, "\n");
+            }
+            else {
+              doc.insertString(offset, "\n" + str);
+            }
+          } catch (BadLocationException e) {
+            System.err.println(e.getMessage());
+          }
+        }
+        evt.consume();
+        break;
+      }
+    }
+  }
+
+  /** Editor CaretEventHandelr Inner Class */
+  class CaretEventHandler implements CaretListener{
+   public void caretUpdate(CaretEvent evt) {
+  		current_dot = evt.getDot();
+      try {
+        caretCoords = editor.modelToView(current_dot);
+      } catch (BadLocationException e) {
+        caretCoords = new Rectangle(0, 0, 0, 0);
+        System.err.println("Exception occurred : " + e);
+      }
+
+      // 현재 Line과 Col을 구해서 적당히 표시해 준다.
+      if (sourceEntry != null) {
+        int as = editor.getCaretPosition();
+        int current_line = sourceEntry.getLineFromOffset(as);
+        if (current_line != -1) {
+          int first = sourceEntry.getElementAt(current_line).getStartOffset();
+          current_column = as - first;
+          sBar.setLineCount(current_line + 1, current_column + 1, sourceEntry.getNumOfLines());
+        }
+      }
+
+      hManager.clearLine();
+    }
+  }
+
+    /**
+     * 마우스 툴팁을 이용하여서, 특정 오브젝트의 타입을 나타내어 준다.
+     */
+  class MouseMotionHandler extends MouseMotionAdapter {
+    public void mouseMoved( MouseEvent e ) {
+      if ( true ) {
+      // TODO:
+      // 1. 현재, 마우스 캐럿의 위치에서부터 해당되는 영역의 String을
+      //   White space 또는 . , {, [, ...앞까지 짤라온다.
+      // 2. 짤라온 내용의 Type을 알아낸다.
+      // 3. 타입을 ToolTip에 지정한다.
+          String type = "java.awt.MouseEvent"; // 왼쪽과 같은 값으로
+          setToolTipText( type );
+      } else // 타입을 알 수 없는 위치에 있으면
+          setToolTipText( "" );
+    }
+  }
+}
