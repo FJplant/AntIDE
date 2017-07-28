@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+ <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+ <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+  <title>
+    test.Module1 Html Client
+   </title>
+</HEAD>
+<body BGCOLOR="#eeeeff">
+
+<H1>  test.Module1 Html Client  </H1>
+
+
+<FORM  method="post" action="/servlet/test.Module1.clienthtml.Module1Gateway">
+
+
+
+<BR>
+
+
+
+
+operation operation1 <BR>
+Param1
+<INPUT NAME=operation1param1>
+Param2
+<INPUT NAME=operation1param2>
+ <BR>
+<input type = "Submit" value = "operation1" name = "Interface1operation1">
+<BR>
+    Result from Interface1.operation1() <INPUT NAME=RESULTInterface1operation1><BR>
+<BR>
+
+
+<input name = Post type = "button" value = "Post">
+
+<!--webbot bot="HTMLMarkup" startspan -->
+<!--NOEDIT-->
+<SERVLET code = "test.Module1.clienthtml.Module1Gateway">
+<PARAM name = "debug" value = "0" >
+
+<PARAM name =button_Post value = "Post">
+
+<PARAM NAME=operation_0 VALUE="Interface1operation1,0,0,RESULTInterface1operation1,operation1param1,operation1param2">
+</SERVLET>
+<!--/NOEDIT-->
+<!--webbot bot="HTMLMarkup" endspan -->
+</FORM>
+
+
+
+</BODY>
+</HTML>

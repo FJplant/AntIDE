@@ -1,0 +1,20 @@
+
+<HTML>
+<head>
+   <title>
+      test.Module1  Html Client Test
+   </title>
+</head>
+<body BGCOLOR="#eeeeff">
+
+
+<FORM>
+
+
+<SERVLET code = "test.Module1.clienthtml.TestModule1">
+
+</SERVLET>
+
+
+</body>
+</html>

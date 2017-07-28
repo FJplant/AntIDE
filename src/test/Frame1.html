@@ -1,0 +1,92 @@
+<html>
+<head>
+<title>C:\WORK\ant\source\test\Frame1.java</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<pre>
+<font color="#c0c0c0">/*
+ *  package : test
+ *  source  : Frame1.java
+ *  date    : 1999.8.9
+ */</font>
+
+<font color="#000033">package</font> test;
+
+<font color="#000033">import</font> java.awt.*;
+<font color="#000033">import</font> java.awt.event.*;
+<font color="#000033">import</font> javax.swing.*;
+
+<font color="#000033">public</font> <font color="#000033">class</font> Frame1 <font color="#000033">extends</font> JFrame {
+    <font color="#c0c0c0">/**
+     *  Frame1 -  constructor 
+     */</font>
+    <font color="#000033">public</font> Frame1() {
+        <font color="#000033">super</font>(<font color="#ff0000">&quot;Frame1&quot;</font>);
+        uiInit();
+        addWindowListener(<font color="#000033">new</font> WindowEventHandler());
+    }
+
+    <font color="#000033">public</font> <font color="#000033">void</font> uiInit() {
+        JPanel panel = <font color="#000033">new</font> JPanel();
+        panel.setLayout(<font color="#000033">new</font> GridLayout(4, 3));
+        GridBagLayout a = <font color="#000033">new</font> GridBagLayout();
+        GridBagConstraints ac = <font color="#000033">new</font> GridBagConstraints();
+        a.setConstraints(a, 
+        JPanel panel2 = <font color="#000033">new</font> JPanel();
+        panel2.setLayout(<font color="#000033">new</font> GridLayout(2,3));
+        
+        JPanel panel3 = <font color="#000033">new</font> JPanel();
+        panel3.setLayout(<font color="#000033">new</font> GridLayout(2,3));
+         
+        panel3.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;하나&quot;</font>));
+        panel3.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;둘&quot;</font>));
+        panel3.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;셋&quot;</font>));
+        panel3.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;a&quot;</font>));
+        panel3.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;b&quot;</font>));
+        panel3.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;c&quot;</font>));
+        
+        panel2.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;하나&quot;</font>));
+        panel2.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;둘&quot;</font>));
+        panel2.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;셋&quot;</font>));
+        panel2.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;a&quot;</font>));
+        panel2.add(panel3);
+        panel2.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;c&quot;</font>));
+
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;1열&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;2열&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;3열&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;1&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;2&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;3&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;4&quot;</font>));
+        panel.add(panel2);
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;6&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;7&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;8&quot;</font>));
+        panel.add(<font color="#000033">new</font> JButton(<font color="#ff0000">&quot;9&quot;</font>));
+        JScrollPane scrollPane = <font color="#000033">new</font> JScrollPane(panel);        
+        getContentPane().add(BorderLayout.CENTER, scrollPane);
+        pack();
+        setVisible(true);
+    }
+    
+    <font color="#c0c0c0">/**
+     *  Main method
+     */</font>
+    <font color="#000033">public</font> <font color="#000033">static</font> <font color="#000033">void</font> main(String[] args) {
+        Frame1 frame = <font color="#000033">new</font> Frame1(); 
+    }
+
+    <font color="#c0c0c0">/** WindowEvent Handler Inner Class */</font>
+    <font color="#000033">class</font> WindowEventHandler <font color="#000033">extends</font> WindowAdapter
+    {
+        <font color="#000033">public</font> <font color="#000033">void</font> windowClosed( WindowEvent e )
+        {
+            <font color="#c0c0c0">//TO DO (implementation here)</font>
+            System.exit(0);
+        }
+    }
+}
+</pre>
+</body>
+</html>
