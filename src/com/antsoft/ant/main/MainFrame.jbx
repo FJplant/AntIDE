@@ -1,0 +1,11 @@
+[PropertyInfo]
+applet,boolean,false,false, , ,true,<default>
+captionText,String,false,false, , ,true,<default>
+executionViewState,boolean,false,false, , ,true,<default>
+messageState,boolean,false,false, , ,true,<default>
+rootComponent,Container,false,false, , ,true,<default>
+[IconNames]
+
+
+
+

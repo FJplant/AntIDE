@@ -1,0 +1,94 @@
+/*
+ * $Header: /AntIDE/source/ant/main/MainFrameRes_ko.java 13    99-06-02 11:47a Itree $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 13 $
+ */
+package com.antsoft.ant.main;
+
+import java.util.*;
+
+public class MainFrameRes_ko extends ListResourceBundle {
+  static final Object[][] contents = {
+	{ "File", "파일(F)" },
+	{ "New", "새로 만들기(N)..." },
+  { "NewFile", "새 파일(W)..." },
+	{ "Open", "열기(O)..." },
+	{ "NewProject", "새로운 프로젝트(E)..." },
+	{ "OpenProject", "프로젝트 열기(J)..." },
+	{ "CloseProject", "프로젝트 닫기(L)" },
+	{ "Save", "저장(S)" },
+	{ "SaveProject", "프로젝트 저장(V)" },
+	{ "SaveAs", "다른 이름으로 저장(A)..." },
+	{ "SaveAll", "모두 저장" },
+	{ "Close", "닫기(C)" },
+	{ "ProjectProperties", "프로젝트 속성(T)..." },
+	{ "Print", "인쇄(P)" },
+	{ "PrinterSetup", "프린터 설정(R)..." },
+  { "Recent", "최근 파일" },
+	{ "Exit", "종료(X)" },
+	{ "Edit", "편집(E)" },
+	{ "Cut", "잘라내기(T)" },
+	{ "Copy", "복사하기(C)" },
+	{ "Paste", "붙여넣기(P)" },
+	{ "Undo", "취소하기(U)" },
+	{ "Redo", "다시하기(R)" },
+  { "Comment", "Comment Lines" },
+  { "Uncomment", "Uncomment Lines" },
+  { "Forward", "Forward Lines" },
+  { "Backward", "Backward Lines" },
+	{ "Search", "찾기(S)" },
+	{ "Find", "찾기(F)..." },
+	{ "SearchAgain", "다시 찾기(S)" },
+	{ "Replace", "바꾸기(R)..." },
+	{ "GotoLineNumber", "지정한 라인으로 가기(G)..." },
+	{ "BrowseSymbol", "심볼 검색하기(B)" },
+	{ "View", "보기(V)" },
+	{ "CodeEditor", "Code Editor" },
+	{ "ClassDesigner", "Class Designer" },
+	{ "MethodDesigner", "Method Designer" },
+  { "BreakPoints", "BreakPoints" },
+	{ "Build", "Build(B)" },
+  { "Compile", "Compile(C)" },
+  { "Make", "Make(M)" },
+	{ "Rebuild", "Rebuild(B)" },
+	{ "Run", "실행(R)" },
+	{ "RunApp", "실행하기(R)" },
+	{ "Stop", "정지(S)" },
+	{ "Parameters", "파라메터 설정...(P)" },
+	{ "StepOver", "Step Over" },
+	{ "TraceInto", "Trace Into" },
+	{ "StepUp", "Step Up" },
+	{ "Continue", "Continue" },
+	{ "ProgramReset", "Program Reset" },
+	{ "AddWatch", "Add Watch..." },
+	{ "AddBreakpoint", "Add Breakpoint..." },
+	{ "Inspect", "Inspect..." },
+	{ "Option", "선택사항(O)" },
+	{ "IDEOptions", "IDE 선택사항...(I)" },
+	{ "DefaultPathProperies", "기본 패스 설정...(D)" },
+  { "JavaDocProperty", "Javadoc 옵션 설정...(J)" },
+	{ "SettingJavadoc", "Javadoc 보기 설정...(S)" },
+	{ "Tools", "Tools(T)" },
+  { "Servlet", "서블릿 with JSDK2.0(T)" },
+  { "ServletPathSet", "서블릿 패스 설정...(P)" },
+  { "ServletRun", "서블릿 실행(R)" },
+	{ "JavatoHTML", "Java HTML 변환기(H)..." },
+	{ "BeautifyJavaSource", "자바 소스 정렬하기(B)" },
+  { "SourceLineCount", "소스 라인 계산하기(C)" },
+	{ "Help", "도움말(H)" },
+	{ "AboutAnt", "Ant에 대하여..." },
+	{ "UsingAnt", "Ant 사용법..." },
+  { "Language", "언어(L)" },
+  { "English", "영어(E)" },
+  { "Korean", "한국어(K)" },
+  { "Japanese", "일본어(J)" } };
+
+  public Object[][] getContents() {
+    return contents;
+  }
+}

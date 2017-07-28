@@ -1,0 +1,277 @@
+/*
+ * $Header: /AntIDE/source/ant/main/Main.java 23    99-05-26 12:33p Itree $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 23 $
+ * Author:       Baek, Jin-woo
+ *               Kwon, Young Mo
+ * SubAuthor:    Kim, Sung-hoon
+ * $History: Main.java $
+ * 
+ * *****************  Version 23  *****************
+ * User: Itree        Date: 99-05-26   Time: 12:33p
+ * Updated in $/AntIDE/source/ant/main
+ * 
+ * *****************  Version 21  *****************
+ * User: Remember     Date: 99-05-25   Time: 11:57a
+ * Updated in $/AntIDE/source/ant/main
+ * 
+ * *****************  Version 17  *****************
+ * User: Multipia     Date: 99-05-25   Time: 2:15a
+ * Updated in $/AntIDE/source/ant/main
+ * 상태바에 메모리 출력하는 루틴 추가
+ * 
+ * *****************  Version 16  *****************
+ * User: Remember     Date: 99-05-24   Time: 2:49p
+ * Updated in $/AntIDE/source/ant/main
+ * 
+ * *****************  Version 15  *****************
+ * User: Multipia     Date: 99-05-16   Time: 11:49p
+ * Updated in $/AntIDE/source/ant/main
+ * 
+ * *****************  Version 14  *****************
+ * User: Remember     Date: 99-05-16   Time: 5:25a
+ * Updated in $/AntIDE/source/ant/main
+ *
+ * *****************  Version 13  *****************
+ * User: Remember     Date: 99-05-15   Time: 5:35a
+ * Updated in $/AntIDE/source/ant/main
+ * 
+ * *****************  Version 12  *****************
+ * User: Multipia     Date: 99-05-11   Time: 11:11a
+ * Updated in $/AntIDE/source/ant/main
+ * Thread Group 설정
+ * 
+ * *****************  Version 11  *****************
+ * User: Multipia     Date: 99-05-09   Time: 8:41p
+ * Updated in $/AntIDE/source/ant/main
+ * Debug Mode 변수 추가
+ * 
+ * *****************  Version 10  *****************
+ * User: Remember     Date: 99-05-07   Time: 1:47p
+ * Updated in $/AntIDE/source/ant/main
+ * last frame 위치, 사이즈로 초기 활성화
+ * 
+ * *****************  Version 9  *****************
+ * User: Multipia     Date: 99-05-06   Time: 6:46a
+ * Updated in $/AntIDE/source/ant/main
+ * Source Safe 헤더 부분 추가
+ */
+package com.antsoft.ant.main;
+
+import javax.swing.UIManager;
+import javax.swing.ImageIcon;
+import javax.swing.JApplet;
+import javax.swing.SwingUtilities;
+
+import java.awt.*;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.io.IOException;
+import java.util.Hashtable;
+
+import com.antsoft.ant.codecontext.CodeContext;
+import com.antsoft.ant.designer.classdesigner.ClassDesigner;
+import com.antsoft.ant.pool.sourcepool.SourcePool;
+import com.antsoft.ant.manager.projectmanager.*;
+import com.antsoft.ant.manager.keymanager.*;
+
+/**
+ * Main Class
+ *
+ * @author Baek, Jin-woo
+ * @author Kim sang-kyun
+ * @author Kwon, Young Mo
+ */
+public class Main extends JApplet implements Runnable {
+  private boolean packFrame = false;
+  private static boolean debugMode = true;
+	private MainFrame mainFrame;
+  public static IdeProperty property;
+  public static Hashtable paramHash;
+  public static boolean isParamLoadEnd = false;
+
+  //Construct the application
+  public Main() {
+
+    SplashScreen Splash=new SplashScreen(new ImageIcon(getClass().getResource("image/antsplash.gif")));
+	  try{
+      /* load property */
+      Splash.showStatus("Loading IDE property...");
+      Thread.sleep(50);
+      property = IdePropertyManager.loadProperty();
+
+      /* load paramHash */
+      Splash.showStatus("Loading method parameter data...");
+      Thread.sleep(50);
+
+      Thread paramDataLoader = new ParamDataLoader();
+      paramDataLoader.setPriority(Thread.MIN_PRIORITY);
+      paramDataLoader.start();
+
+      /* codecontext를 생성한다 */
+      Splash.showStatus("Generating Code Context...");
+      Thread.sleep(50);
+      CodeContext codeContext = new CodeContext();
+
+      /* main frame을 생성하고 codecontext 를 넘긴다 */
+      Splash.showStatus("Building up Main Frame...");
+      Thread.sleep(50);
+      mainFrame = new MainFrame(codeContext);
+
+      /* Keymanager를 시작한다 */
+      KeyManager.start();
+
+      //Validate frames that have preset sizes
+      //Pack frames that have useful preferred size info, e.g. from their layout
+      if (packFrame) {
+        mainFrame.pack();
+      }
+      else
+        mainFrame.validate();
+
+      Rectangle lastBounds = Main.property.getLastFrameBounds();
+      if(lastBounds != null) {
+         mainFrame.setBounds(lastBounds);
+      }
+      else{
+        // Set Main Frame's Size
+        mainFrame.setSize(new Dimension(800, 600));
+        // Center the window
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension frameSize = mainFrame.getSize();
+        if (frameSize.height > screenSize.height) frameSize.height = screenSize.height;
+        if (frameSize.width > screenSize.width) frameSize.width = screenSize.width;
+        mainFrame.setLocation((screenSize.width - frameSize.width) / 2, (screenSize.height - frameSize.height) / 2);
+        // End ------- center the window ------------
+      }
+
+      String servletRunner = Main.property.getServletRunnerPath();
+      if(servletRunner == null) {
+        servletRunner = new String("none");
+        String servletWebBrowserPath = new String("none");
+        boolean makingBatch = true;
+        String servletPort = new String("8080");
+        String servletLog = new String("50");
+        String servletMax = new String("100");
+        String servletTimeout = new String("5000");
+        String servletDirectory = new String(".\\examples");
+        String servletProperty = new String(".\\examples\\servlet.properties");
+
+        Main.property.setServletRunnerPath(servletRunner);
+        Main.property.setServletWebBrowserPath(servletWebBrowserPath);
+        Main.property.setMakingBatch(makingBatch);
+        Main.property.setServletPort(servletPort);
+        Main.property.setServletLog(servletLog);
+        Main.property.setServletMax(servletMax);
+        Main.property.setServletTimeout(servletTimeout);
+        Main.property.setServletDirectory(servletDirectory);
+        Main.property.setServletProperty(servletProperty);
+
+        IdePropertyManager.saveProperty(Main.property);
+
+      }
+
+      Splash.showStatus("Loading modules finished...");
+      Thread.sleep(20);
+      Splash.showStatus("and starting Ant...");
+      Thread.sleep(50);
+
+      Splash.close();
+      mainFrame.setVisible(true);
+
+
+    }catch(Exception e){e.printStackTrace();}
+  }
+//Main method
+  public void destroy() {
+  }
+
+  public void init() {
+    try  {
+      UIManager.setLookAndFeel(new javax.swing.plaf.metal.MetalLookAndFeel());
+    } catch ( Exception e ) {
+      showStatus( e.toString() );
+    }
+  }
+
+  public void start() {
+  }
+
+  public void stop() {
+  }
+
+  public static void main(String[] args) {
+    PrintStream err = null;
+
+    try  {
+      //UIManager.setLookAndFeel(new com.sun.java.swing.plaf.windows.WindowsLookAndFeel());
+      //UIManager.setLookAndFeel(new com.sun.java.swing.plaf.motif.MotifLookAndFeel());
+      UIManager.setLookAndFeel(new javax.swing.plaf.metal.MetalLookAndFeel());
+
+      // Command Argument들을 받아 들이는 곳입니다.
+      int argc = 0 ;
+      while ( argc < args.length ) {
+        if ( args[argc].equals("-errlog") ) {
+          // Standard Error 설정
+          argc ++;
+          FileOutputStream out = new FileOutputStream( args[argc] );
+          // 아래는 파일에다가 정상적으로 출력을 하지 않는군요.
+          //err = new PrintStream( out );
+          //System.setErr( err );
+          //System.err.println( "Error Log Starts:" );
+        }
+        argc++;
+      }
+	  // Standard Error 설정
+    } catch ( IOException ioe ) {
+	    System.out.println( "IOException occurred" );
+	  } catch (Exception e) {
+    }
+
+    Main app = new Main();
+    ThreadGroup group = new ThreadGroup("Ant-ThreadGroup");
+    Thread t = new Thread(group, app, "Ant-MainThread");
+    t.setDaemon( true );
+    t.start();
+
+	  if ( err != null ) {
+	    err.close();
+	  }
+  }
+
+  public static boolean isDebugMode() {
+    return debugMode;
+  }
+
+  public void run() {
+    //TODO: implement this java.lang.Runnable method;
+    while ( true ) {
+      // 현재는 1초마다 한번씩 일어나며 아무 일도 안함.
+      // TODO: 현재, 남아 있는 메모리및 할당된 메모리 값을 받아서 메모리 Usage를 출력한다.
+      long freeMemory, totalMemory;
+      freeMemory = Runtime.getRuntime().freeMemory();
+      totalMemory = Runtime.getRuntime().totalMemory();
+      
+      // 상태바에 메모리 상태를 표시한다.
+      
+      try {
+        Thread.currentThread().sleep( 1000 );
+        // TODO: implement auto saving, animation
+      } catch ( InterruptedException e ) {
+      }
+    }
+  }
+
+  class ParamDataLoader extends Thread{
+    public void run(){
+      paramHash = IdePropertyManager.loadParamHash();
+      isParamLoadEnd = true;
+    }
+  }
+}
+
