@@ -1,0 +1,330 @@
+/*
+ * $Header: /AntIDE/source/ant/wizard/Wizard.java 6     99-05-24 3:41p Lila $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 6 $
+ */
+package com.antsoft.ant.wizard;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import javax.swing.*;
+import javax.swing.border.*;
+
+import com.antsoft.ant.main.*;
+import com.antsoft.ant.manager.projectmanager.*;
+
+/**
+ * @author YunKyung Kim
+ */
+public class Wizard extends JDialog implements ActionListener, MouseListener{
+
+  JFrame frame = null;
+
+  JLabel appIcon;
+  JLabel app2Icon;
+  JLabel appletIcon;
+  JLabel applet2Icon;
+  JLabel servletIcon;
+  JLabel servlet2Icon;
+  JLabel jdbcIcon;
+  JLabel jdbc2Icon;
+  JLabel beanIcon;
+  JLabel bean2Icon;
+
+  Color color;
+
+  JButton ok;
+  JButton cancel;
+
+  JPanel panel3;
+  JPanel panel4;
+  JPanel panel5;
+  JPanel panel6;
+
+  boolean flag1 = false;
+  boolean flag2 = false;
+  boolean flag3 = false;
+  boolean flag4 = false;
+  boolean flag5 = false;
+
+  File[] file = new File[1];
+  String path = Main.property.getPathModel().getSourceRoot();
+
+//  private int type = 0;
+//  public static final int APPLICATION = 1;
+//  public static final int APPLET      = 2;
+//  public static final int SERVLET     = 3;
+//  public static final int JDBC        = 4;
+
+//  LineBorder border1 = new  LineBorder( Color.white );
+//  LineBorder border2 = new  LineBorder( Color. blue );
+
+  public Wizard(JFrame frame, String title, boolean modal) {
+    super(frame, title, modal);
+    this.frame = frame;
+    try  {
+      jbInit();
+      setBackground( Color.white );
+      pack();
+      setResizable( false );
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+
+  public Wizard() {
+    this(null, "Wizard Dialog", false);
+  }
+
+  void jbInit() throws Exception {
+    JPanel panel1 = new JPanel();
+    //panel1.setBackground( Color.white );
+    panel1.setLayout( new FlowLayout( FlowLayout.LEFT ) );
+
+    //Icon create
+    appIcon = new JLabel( "Application", new ImageIcon( getClass().getResource("image/app.gif") ), SwingConstants.CENTER );
+    appIcon.setVerticalTextPosition( JLabel.BOTTOM );
+    appIcon.setHorizontalTextPosition( JLabel.CENTER );
+
+    //default color¾ò±â
+    color = appIcon.getForeground();
+
+    appletIcon = new JLabel( "Applet", new ImageIcon( getClass().getResource("image/applet.gif") ), SwingConstants.CENTER );
+    appletIcon.setVerticalTextPosition( JLabel.BOTTOM );
+    appletIcon.setHorizontalTextPosition( JLabel.CENTER );
+
+    servletIcon = new JLabel( "Servlet", new ImageIcon( getClass().getResource("image/servlet.gif") ), SwingConstants.CENTER );
+    servletIcon.setVerticalTextPosition( JLabel.BOTTOM );
+    servletIcon.setHorizontalTextPosition( JLabel.CENTER );
+
+    jdbcIcon = new JLabel( "JDBC", new ImageIcon( getClass().getResource("image/jdbc.gif") ), SwingConstants.CENTER );
+    jdbcIcon.setVerticalTextPosition( JLabel.BOTTOM );
+    jdbcIcon.setHorizontalTextPosition( JLabel.CENTER );
+
+    beanIcon = new JLabel( "Beans" );
+
+    panel3 = new JPanel();
+    panel3.setBackground( Color.white );
+
+    panel3.add( appIcon );
+    panel3.add( new JLabel(" ") );
+    panel3.add( appletIcon );
+    panel3.add( new JLabel("   ") );
+    panel3.add( servletIcon );
+    panel3.add( new JLabel("   ") );
+    panel3.add( jdbcIcon );
+    panel3.add( new JLabel("   ") );
+    panel3.add( beanIcon );
+
+    appIcon.addMouseListener( this );
+    appletIcon.addMouseListener( this );
+    servletIcon.addMouseListener( this );
+    jdbcIcon.addMouseListener( this );
+    beanIcon.addMouseListener( this );
+    
+    panel1.add( panel3 );
+    panel1.setBackground( Color.white );
+    EtchedBorder border = new EtchedBorder();
+    panel1.setBorder( border );
+
+    ok = new JButton( "OK" );
+    cancel = new JButton( "Cancel" );
+
+    ok.addActionListener( this );
+    cancel.addActionListener( this );
+
+    JPanel panel2 = new JPanel();
+    panel2.setLayout( new FlowLayout( FlowLayout.CENTER ) );
+    panel2.add( ok );
+    panel2.add( cancel );
+
+    JPanel panel = (JPanel)getContentPane();
+    panel.setBorder( border );
+    panel.setLayout( new BorderLayout() );
+    panel.add( panel1, BorderLayout.CENTER );
+    JPanel pl = new JPanel();
+    panel.add( pl, BorderLayout.EAST );
+    pl = new JPanel();
+    panel.add( pl, BorderLayout.WEST );
+    pl = new JPanel();
+    panel.add( pl, BorderLayout.NORTH );
+    panel.add( panel2, BorderLayout.SOUTH );
+  }
+
+  public void setPath(String path) {
+  	this.path = path;
+  }
+
+  public File[] getFiles() {
+  	return file;
+  }
+
+  public void actionPerformed( ActionEvent e ){
+    if( e.getSource() == ok ){
+      if( (flag1 == false) && (flag2 == false) && (flag3 == false) && (flag4 == false) ){
+        JOptionPane.showMessageDialog(this, "Selected Nothing", "Warning", JOptionPane.ERROR_MESSAGE);
+      }else{
+        dispose();
+        if( flag1 ){
+//        	type = APPLICATION;
+	        ApplicationWizard aw = new ApplicationWizard( frame, path );
+          file = aw.getFiles();
+        }else if( flag2 ){
+//        	type = APPLET;
+	        AppletWizard apw = new AppletWizard( frame, path );
+          file = apw.getFiles();
+        }else if( flag3 ){
+//        	type = SERVLET;
+          ServletWizard sw = new ServletWizard( frame, path );
+          file = sw.getFiles();
+        }else if( flag4 ){
+//        	type = JDBC;
+	        JDBCWizard jw = new JDBCWizard( frame, path );
+          file = jw.getFiles();
+        }else if( flag5 ){
+//          type = BEANS;
+          BeanWizard bw = new BeanWizard( frame, path );
+          file = bw.getFiles();
+        }
+      }
+    }else if( e.getSource() == cancel ){
+//    	type = 0;
+      dispose();
+    }
+  }
+
+  public void mouseClicked( MouseEvent e ){
+    if( e.getClickCount() == 1 ){
+      if( e.getSource() == appIcon ){
+        if( flag1 ){
+          flag1 = false;
+          appIcon.setForeground( color );
+        }else{
+          flag1 = true;
+          appIcon.setForeground( Color.red );
+        }
+        flag2 = false;
+        flag3 = false;
+        flag4 = false;
+        flag5 = false;
+
+        appletIcon.setForeground( color );
+        servletIcon.setForeground( color );
+        jdbcIcon.setForeground( color );
+        beanIcon.setForeground( color );
+
+      }else if( e.getSource() == appletIcon ){
+        flag1 = false;
+        if( flag2 ){
+          flag2 = false;
+          appletIcon.setForeground( color );
+        }else{
+          flag2 = true;
+          appletIcon.setForeground( Color.red );
+        }
+        flag3 = false;
+        flag4 = false;
+        flag5 = false;
+
+        appIcon.setForeground( color );
+        servletIcon.setForeground( color );
+        jdbcIcon.setForeground( color );
+        beanIcon.setForeground( color );
+
+      }else if( e.getSource() == servletIcon ){
+        flag1 = false;
+        flag2 = false;
+        if( flag3 ){
+          flag3 = false;
+          servletIcon.setForeground( color );
+        }else{
+          flag3 = true;
+          servletIcon.setForeground( Color.red );
+        }
+        flag4 = false;
+        flag5 = false;
+
+        appIcon.setForeground( color );
+        appletIcon.setForeground( color );
+        jdbcIcon.setForeground( color );
+        beanIcon.setForeground( color );
+
+      }else if( e.getSource() == jdbcIcon ){
+        flag1 = false;
+        flag2 = false;
+        flag3 = false;
+        if( flag4 ){
+          flag4 = false;
+          jdbcIcon.setForeground( color );
+        }else{
+          flag4 = true;
+          jdbcIcon.setForeground( Color.red );
+        }
+        flag5 = false;
+
+        appIcon.setForeground( color );
+        appletIcon.setForeground( color );
+        servletIcon.setForeground( color );
+        beanIcon.setForeground( color );
+
+      }else if( e.getSource() == beanIcon ){
+        flag1 = false;
+        flag2 = false;
+        flag3 = false;
+        flag4 = false;
+        if( flag5 ){
+          flag5 = false;
+          beanIcon.setForeground( color );
+        }else{
+          flag5 = true;
+          beanIcon.setForeground( Color.red );
+        }
+
+        appIcon.setForeground( color );
+        appletIcon.setForeground( color );
+        servletIcon.setForeground( color );
+        jdbcIcon.setForeground( color );
+      }
+    }
+    if( e.getClickCount() == 2 ){
+      dispose();
+      if( e.getSource() == appIcon ){
+//      	type = APPLICATION;
+        ApplicationWizard aw = new ApplicationWizard(frame, path);
+        file = aw.getFiles();
+      }else if( e.getSource() == appletIcon ){
+//      	type = APPLET;
+        AppletWizard apw = new AppletWizard( frame, path );
+        file = apw.getFiles();
+      }else if( e.getSource() == servletIcon ){
+//      	type = SERVLET;
+        ServletWizard sw = new ServletWizard( frame, path );
+        file = sw.getFiles();
+      }else if( e.getSource() == jdbcIcon ){
+//      	type = JDBC;
+        JDBCWizard jw = new JDBCWizard( frame, path );
+        file = jw.getFiles();
+      }else if( e.getSource() == beanIcon ){
+        BeanWizard bw = new BeanWizard( frame, path );
+        file = bw.getFiles();
+      }
+    }
+  }
+  public void mouseEntered( MouseEvent e ){
+  }
+  public void mouseExited( MouseEvent e ){
+  }
+  public void mouseReleased( MouseEvent e ){
+  }
+  public void mousePressed( MouseEvent e ){
+  }
+}
+

@@ -1,0 +1,57 @@
+
+package com.antsoft.ant.wizard;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.border.*;
+
+public class EtcPanel extends JPanel {
+
+  //JLabel lbl = new JLabel("Select method to overrinde.");
+  JCheckBox toString = new JCheckBox("toString()");
+  JCheckBox equals = new JCheckBox("equals()");
+  JCheckBox paint = new JCheckBox("paint()");
+  JCheckBox beanInfo = new JCheckBox("Create BeanInfo Class");
+
+  TitledBorder border1 = new TitledBorder("Select overriding method");
+  TitledBorder border2 = new TitledBorder("Create BeanInfo Class");
+
+  public EtcPanel() {
+    try  {
+      jbInit();
+    }
+    catch (Exception ex) {
+      ex.printStackTrace();
+    }
+  }
+
+  void jbInit() throws Exception {
+    //size ÁöÁ¤
+    toString.setPreferredSize( new Dimension(340,20) );
+    equals.setPreferredSize( new Dimension(340,20) );
+    paint.setPreferredSize( new Dimension(340,20) );
+    beanInfo.setPreferredSize( new Dimension(340,20) );
+
+    JPanel p1 = new JPanel();
+    p1.setLayout( new GridLayout(3,1) );
+    p1.setBorder(border1);
+    p1.add(toString);
+    p1.add(equals);
+    p1.add(paint);
+
+    JPanel p2 = new JPanel();
+    p2.setLayout( new GridLayout(1,1) );
+    p2.setBorder(border2);
+    p2.add(beanInfo);
+
+    JPanel p3 = new JPanel();
+    p3.setLayout( new GridLayout(1,1) );
+    p3.add(new JLabel(""));
+
+    setLayout( new FlowLayout(FlowLayout.CENTER) );
+    add(p1);
+    add(p3);
+    add(p2);
+  }
+}
+
