@@ -1,0 +1,247 @@
+/*
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Header: /AntIDE/source/ant/compiler/Compiler.java 12    99-06-01 5:49p Kahn $
+ * $Revision: 12 $
+ */
+package com.antsoft.ant.compiler;
+
+import java.io.*;
+import java.util.Vector;
+
+import com.antsoft.ant.main.MainFrame;
+import com.antsoft.ant.manager.projectmanager.*;
+import com.antsoft.ant.property.*;
+import com.antsoft.ant.property.projectproperty.CompilerOptionModel;
+import com.antsoft.ant.util.Constants;
+
+/**
+ *  class Compiler
+ *
+ *  @author Jinwoo Baek
+ */
+public class Compiler {//implements Runnable {
+	public static final int VERSION_1_1 = 1;
+  public static final int VERSION_1_2 = 2;
+
+  // 현재 1.1 버전과 1.2 버전의 옵션이 다르다.
+  private int compilerVersion = 0;
+  // 컴파일러의 파일 경로
+  private String compilerPath = null;
+  // 컴파일러 옵션
+  private CompilerOptionModel model = null;
+	// 커맨드 라인 명령
+  private String cmd[] = null;
+  // output
+  private OutputPanel outputPanel = null;
+  // project - 컴파일 관련 정보를 담고 있다.
+  private Project project = null;
+	private int i = 0; // cmd를 넣기 위한 변수
+  private int numOfFiles = 0; // 컴파일할 파일 개수
+
+  private Process p = null;
+
+  /**
+   *  Constructor
+   */
+	public Compiler(Project prj) {
+    this.project = prj;
+    if (project != null) {
+    	model = project.getCompilerModel();
+    }
+  }
+
+  public int getVersion() {
+  	return compilerVersion;
+  }
+
+  public OutputStream getOutputStream() {
+  	return null;
+  }
+
+  /**
+   *  파일들을 가지고 컴파일한다.(성훈이 수정)
+   */
+  public boolean buildInternalVM(Vector fileList, OutputPanel pl) {
+    this.outputPanel = pl;
+		boolean status = false; // 컴파일을 할 수 있는가 본다.
+    numOfFiles = fileList.size();
+    Vector cmdVector = new Vector();
+    JdkInfo info = project.getPathModel().getCurrentJdkInfo();
+    if (info !=null) {
+      String classpath = project.getPathModel().getClassPath();
+      String sourcepath = project.getPathModel().getSourcePath();
+			String outputroot = project.getPathModel().getOutputRoot();
+
+    	if (model != null) {
+ 	    	if (model.getDebugMode()) cmdVector.addElement(model.getDebugOption());
+     	  if (model.getWarning()) cmdVector.addElement(model.getWarningOption());
+        if (model.getDeprecation()) cmdVector.addElement(model.getDepreOption());
+ 	    }
+
+  		if ((classpath != null) && (!classpath.equals(""))) {
+				cmdVector.addElement("-classpath");
+  			if ((sourcepath != null) && (!sourcepath.equals(""))) {
+  				cmdVector.addElement(classpath+File.pathSeparator+sourcepath);
+        }
+        else cmdVector.addElement(classpath);
+			}
+
+			if ((outputroot != null) && (!outputroot.equals(""))) {
+				cmdVector.addElement("-d");
+				cmdVector.addElement(outputroot);
+			}
+
+			for (int j = 0; j < numOfFiles; j++) {
+				ProjectFileEntry pfe = (ProjectFileEntry)fileList.elementAt(j);
+				if (pfe.getName().toLowerCase().endsWith(".java"))
+        	cmdVector.addElement(pfe.getPath() + File.separator + pfe.getName());
+				status = true;
+			}
+
+      MainFrame.displayMessageAtStatusBar("   Preparing to Compile");
+      if (status) {
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();  // 에러 메세지를 임의의 출력스트림을 통해 출력한다.
+
+        Build cc = new Build(bo,"");
+        cmd = new String[cmdVector.size()];
+        for (int k=0;k<cmdVector.size();++k) {
+          cmd[k] = (String)cmdVector.elementAt(k);
+        }
+        boolean success = cc.compile(cmd);
+        outputPanel.setText(bo.toString());
+        if (success) {
+          MainFrame.displayMessageAtStatusBar("Compile completed : No ERROR !!!");
+          return true;
+        }
+        else {
+          MainFrame.displayMessageAtStatusBar("Compile failed !!!");
+          //outputPanel.setVisible(true);
+        }
+      }
+      else MainFrame.displayMessageAtStatusBar(" Compile : can't compile !!!");
+    }
+
+    return false;
+  }
+
+  /**
+   *  파일들을 가지고 컴파일한다.
+   */
+  public boolean buildExternalVM(Vector fileList, OutputPanel pl) {
+  	this.outputPanel = pl;
+		boolean status = false; // 컴파일을 할 수 있는가 본다.
+    numOfFiles = fileList.size();
+		cmd = new String[15 + numOfFiles];
+    for (int j = 0; j < cmd.length; j++) cmd[j] = "";
+		JdkInfo info = project.getPathModel().getCurrentJdkInfo();
+    if (info != null) {
+			compilerPath = info.getJavacEXEPath();
+//    compilerVersion = info.getVersion();
+			String classpath = project.getPathModel().getClassPath();
+			String sourcepath = project.getPathModel().getSourcePath();
+			String outputroot = project.getPathModel().getOutputRoot();
+			if ((compilerPath != null) && (!compilerPath.equals(""))) {
+				cmd[i++] = compilerPath;
+
+	    	if (model != null) {
+  	    	if (model.getDebugMode()) cmd[i++] = model.getDebugOption();
+    	    if (model.getOptimizing()) cmd[i++] = model.getOptimizeOption();
+      	  if (model.getWarning()) cmd[i++] = model.getWarningOption();
+        	if (model.getVerboseMsg()) cmd[i++] = model.getVerboseOption();
+	        if (model.getDeprecation()) cmd[i++] = model.getDepreOption();
+          if (model.getDepend()) cmd[i++] = model.getDependOption();
+          if (model.getNoWrite()) cmd[i++] = model.getNoWriteOption();
+          if (model.getCommon()) cmd[i++] = model.getCommonOption();
+  	    }
+
+				if ((classpath != null) && (!classpath.equals(""))) {
+					cmd[i++] = "-classpath";
+					cmd[i++] = classpath;
+				}
+/*  진우가 막음
+				if ((sourcepath != null) && (!sourcepath.equals(""))) {
+					cmd[i++] = "-sourcepath";
+					cmd[i++] = sourcepath;
+				}
+*/
+				if ((outputroot != null) && (!outputroot.equals(""))) {
+					cmd[i++] = "-d";
+					cmd[i++] = outputroot;
+				}
+
+				for (int j = 0; j < numOfFiles; j++) {
+					ProjectFileEntry pfe = (ProjectFileEntry)fileList.elementAt(j);
+					if (pfe.getName().toLowerCase().endsWith(".java"))
+	        	cmd[i + j] = pfe.getPath() + File.separator + pfe.getName();
+					status = true;
+				}
+			}
+		}
+
+		if (status) {
+			MainFrame.displayMessageAtStatusBar("Compiling...");
+      build();
+      return true;
+ 		}
+		else MainFrame.displayMessageAtStatusBar("Can't Compile");
+    return false;
+	}
+
+  public void build() {
+		try {
+			StringBuffer command = new StringBuffer();
+      String[] cmd2 = new String[i + numOfFiles];
+      for (int j = 0; j < cmd2.length; j++) cmd2[j] = cmd[j];
+			for (int j = 0; j < cmd2.length; j++) {
+        command.append(cmd2[j] + " ");
+      }
+//			outputPanel.setText(command.toString() + Constants.lineSeparator);
+
+			Runtime rt = Runtime.getRuntime();
+			p = rt.exec(cmd2);
+			BufferedInputStream out = (BufferedInputStream)p.getInputStream();
+
+			LineNumberReader lnr = new LineNumberReader(
+																		new InputStreamReader(p.getErrorStream()));
+			String outStr = null;
+			while((outStr = lnr.readLine()) != null){
+				outputPanel.appendText(outStr + Constants.lineSeparator);
+			}
+			out.close();
+				outputPanel.setText("compilaion done..." + Constants.lineSeparator);
+			MainFrame.displayMessageAtStatusBar("Compile completed");
+			if (p != null) p.destroy();
+		} catch (IOException e) {
+			System.out.println("Exception in PE : " + e);
+		}
+  }
+
+  public boolean compile(Vector fileList, OutputPanel pl) {
+    System.gc();  // force garbage collection.
+
+    if (fileList.size()==0) {
+      MainFrame.displayMessageAtStatusBar("Compile completed");
+      for (int i=0;i<3;++i) System.gc();
+      return true;
+    }
+    boolean flag;
+    if (model.getInternalVMMode()) flag = buildInternalVM(fileList,pl);
+    else flag = buildExternalVM(fileList,pl);
+
+    for (int i=0;i<3;++i) System.gc();
+    return flag;
+  }
+
+  public void setModel(CompilerOptionModel model) {
+  	this.model = model;
+  }
+
+  public CompilerOptionModel getModel() {
+  	return model;
+  }
+}
