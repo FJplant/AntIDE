@@ -1,0 +1,9 @@
+[PropertyInfo]
+address,String,true,false,address,address,true,<default>
+tel,String,false,false,tel,tel,true,<default>
+pager,String,true,true,pager,pager,true,<default>
+[IconNames]
+
+
+
+
