@@ -1,0 +1,257 @@
+/*
+ * $Header: /AntIDE/source/ant/pool/sourcepool/JavaView.java 7     99-06-02 5:28p Multipia $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 7 $
+ * $History: JavaView.java $
+ * 
+ * *****************  Version 7  *****************
+ * User: Multipia     Date: 99-06-02   Time: 5:28p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 
+ * *****************  Version 4  *****************
+ * User: Multipia     Date: 99-05-25   Time: 2:46a
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * Local에서 생성되는 Object들을 최대한 Member 변수로 바꾸었다.
+ * 
+ * *****************  Version 1  *****************
+ * User: Multipia     Date: 99-04-29   Time: 12:36p
+ * Created in $/AntIDE/source/ant/pool/sourcepool
+ * Java Source를 Coloring해서 보여주는 Class
+ *
+ * *****************  Version 5  *****************
+ * User: Multipia     Date: 99-04-28   Time: 6:11p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 메모리 사용 향상
+ *
+ * *****************  Version 4  *****************
+ * User: Multipia     Date: 99-04-24   Time: 12:40p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 첫 줄 주석문 문제 해결
+ *
+ * *****************  Version 3  *****************
+ * User: Multipia     Date: 99-04-23   Time: 9:54p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 선택된 Text의 반전된 Coloring 기능 추가
+ *
+ * *****************  Version 2  *****************
+ * User: Strife       Date: 99-04-20   Time: 1:39a
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 횡스크롤 수정
+ * WrappedPlainView 대신 PlainView로 교체한 결과입니다. -_-;;;
+ */
+package com.antsoft.ant.pool.sourcepool;
+
+import java.awt.*;
+import javax.swing.text.*;
+import com.antsoft.ant.main.Main;
+import com.antsoft.ant.property.defaultproperty.*;
+
+/**
+ * View that uses the lexical information to determine the
+ * style characteristics of the text that it renders.  This
+ * simply colorizes the various tokens and assumes a constant
+ * font family and size.
+ */
+class JavaView extends PlainView {
+  private boolean syntaxColoring = true;
+  JavaContext context;
+  private Segment segment = new Segment();
+  private JavaDocument doc;
+  private Color lastColor, fgColor;
+  
+  /**
+   * Construct a simple colorized view of java
+   * text.
+   */
+  JavaView( JavaContext context, Element elem) {
+    super(elem);
+    this.context = context;
+    doc = (JavaDocument) getDocument();
+    lexer = doc.createScanner();
+    lexerValid = false;
+
+    // 현재는 무조건 SyntaxColoring 수행
+    setSyntaxColoring(true);
+  }
+
+  public void setSyntaxColoring( boolean b ) {
+    syntaxColoring = b;
+  }
+
+  public boolean isSyntaxColoring( ) {
+    return syntaxColoring;
+  }
+
+  protected int getTabSize() {
+    int tabSize = Main.property.getTabSpaceSize();
+    if (tabSize > 0) return tabSize;
+    else return 2;
+  }
+/*
+  protected int calculateBreakPosition(int p0, int p1) {
+    Element elm = doc.getParagraphElement(p0);
+    return elm.getEndOffset();
+  }
+*/
+  /**
+   * Renders using the given rendering surface and area
+   * on that surface.  This is implemented to invalidate
+   * the lexical scanner after rendering so that the next
+   * request to drawUnselectedText will set a new range
+   * for the scanner.
+   *
+   * @param g the rendering surface to use
+   * @param a the allocated region to render into
+   *
+   * @see View#paint
+   */
+  public void paint(Graphics g, Shape a) {
+    super.paint(g, a);
+    lexerValid = false;
+  }
+
+  /**
+   * Draw Colored Source Code.
+   * Renders the given range in the model as normal unselected
+   * text.  This is implemented to paint colors based upon the
+   * token-to-color translations.  To reduce the number of calls
+   * to the Graphics object, text is batched up until a color
+   * change is detected or the entire requested range has been
+   * reached.
+   *
+   * @param g the graphics context
+   * @param x the starting X coordinate
+   * @param y the starting Y coordinate
+   * @param p0 the beginning position in the model
+   * @param p1 the ending position in the model
+   * @param inverse if true, the text is drawed with inversed color.
+   * @returns the location of the end of the range
+   * @exception BadLocationException if the range is invalid
+   */
+  private int drawColoredText( Graphics g, int x, int y, int p0, int p1,
+                                 boolean inverse ) throws BadLocationException {
+    // TODO: 이곳에서 많은 병목이 발생을 합니다.
+    //       이 메소드의 전체 수행 속도를 개선시켜야할 것입니다.
+    doc.getText( p0, p1 - p0, segment );
+    Element rootelem = doc.getDefaultRootElement();
+    Color commentC = Main.property.getColor(ColorPanel.COMMENT);
+
+//    if ( isSyntaxColoring() ) {
+    if ( syntaxColoring ) {
+      lastColor = null;
+//      Font lastf = null;
+      int mark = p0;
+      for (; p0 < p1; ) {
+        updateScanner(p0);
+        int p = Math.min(lexer.getEndOffset(), p1);
+        p = (p <= p0) ? p1 : p;
+        p0 = lexer.getStartOffset();
+        fgColor = context.getForeground(lexer.token);
+        // 주석문 내인지를 Check 한다.
+
+        // elem의 Attribute 중에서 Comment Attribute가 있으면,
+        AttributeSet attrSet = rootelem.getElement( rootelem.getElementIndex( p0 ) ).getAttributes();
+
+
+        if ( attrSet.containsAttribute( JavaDocument.CommentAttribute, JavaDocument.CommentAttribute ) )
+          fgColor = commentC;
+
+        if ( inverse ) // if inverse is true, inverse the foreground color
+          //fgColor = new Color( 255 - fgColor.getRed(), 255 - fgColor.getGreen(), 255 - fgColor.getBlue() );
+          fgColor = Color.black;
+
+//        Font fgf = getFont(lexer.token);
+          if (fgColor != lastColor && lastColor != null) {
+          // color change, flush what we have
+          g.setColor(lastColor);
+//          g.setFont(new Font("Fixedsys", Font.PLAIN, 12));
+//          g.setFont(lastf);
+          doc.getText( mark, p0 - mark, segment );
+          x = Utilities.drawTabbedText(segment, x, y, g, this, mark );
+          mark = p0;
+        }
+        lastColor = fgColor;
+//        lastf = fgf;
+        p0 = p;
+      }
+      // flush remaining
+      g.setColor(lastColor);
+      //g.setFont(lastf);
+
+      if ( p0 > mark ) {
+        doc.getText( mark, p0 - mark, segment );
+        x = Utilities.drawTabbedText(segment, x, y, g, this, mark );
+      }
+    } else {
+      // no syntax coloring
+      g.setColor( Color.black );
+      x = Utilities.drawTabbedText(segment, x, y, g, this, p0 );
+    }
+
+    rootelem = null;
+    commentC = null;
+    return x;
+  }
+
+  /**
+   * Renders the given range in the model as normal unselected
+   * text.  This is implemented to paint colors based upon the
+   * token-to-color translations.  To reduce the number of calls
+   * to the Graphics object, text is batched up until a color
+   * change is detected or the entire requested range has been
+   * reached.
+   *
+   * @param g the graphics context
+   * @param x the starting X coordinate
+   * @param y the starting Y coordinate
+   * @param p0 the beginning position in the model
+   * @param p1 the ending position in the model
+   * @returns the location of the end of the range
+   * @exception BadLocationException if the range is invalid
+   */
+
+  protected int drawUnselectedText(Graphics g, int x, int y,
+         int p0, int p1) throws BadLocationException {
+
+    return drawColoredText( g, x, y, p0, p1, false);
+  }
+
+
+  protected int drawSelectedText(Graphics g, int x, int y,
+         int p0, int p1) throws BadLocationException {
+
+    syntaxColoring = false;
+    int ret =  drawColoredText( g, x, y, p0, p1, true);
+    syntaxColoring = true;
+    return ret;
+  }
+
+  /**
+   * Update the scanner (if necessary) to point to the appropriate
+   * token for the given start position needed for rendering.
+   */
+  private void updateScanner(int p) {
+    try {
+      if (! lexerValid) {
+        lexer.setRange(doc.getScannerStart(p), doc.getLength());
+        lexerValid = true;
+      }
+      while (lexer.getEndOffset() <= p) {
+        lexer.scan();
+      }
+    } catch (Throwable e) {
+      // can't adjust scanner... calling logic
+      // will simply render the remaining text.
+      //e.printStackTrace();
+    }
+  }
+
+  JavaDocument.Scanner lexer;
+  boolean lexerValid;
+}
+

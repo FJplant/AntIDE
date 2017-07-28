@@ -1,0 +1,433 @@
+/*
+ * $Header: /AntIDE/source/ant/pool/sourcepool/JavaDocument.java 8     99-05-25 2:45a Multipia $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 8 $
+ * $History: JavaDocument.java $
+ * 
+ * *****************  Version 8  *****************
+ * User: Multipia     Date: 99-05-25   Time: 2:45a
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 
+ * *****************  Version 7  *****************
+ * User: Multipia     Date: 99-05-17   Time: 12:22a
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 
+ * *****************  Version 6  *****************
+ * User: Strife       Date: 99-05-07   Time: 6:28p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 엔터 관련 처리 수정
+ * 
+ * *****************  Version 5  *****************
+ * User: Strife       Date: 99-05-07   Time: 5:57p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * Overwrite Caret 관련 수정
+ * 
+ * *****************  Version 4  *****************
+ * User: Strife       Date: 99-05-07   Time: 9:50a
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 저장관련 수정
+ * 
+ * *****************  Version 3  *****************
+ * User: Multipia     Date: 99-04-24   Time: 12:40p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 불필요한 코드 삭제
+ * 
+ * *****************  Version 2  *****************
+ * User: Strife       Date: 99-04-17   Time: 12:00p
+ * Updated in $/AntIDE/source/ant/pool/sourcepool
+ * 출력조정
+ *
+ * *****************  Version 1  *****************
+ * User: Insane       Date: 98-09-12   Time: 5:18p
+ * Created in $/Ant/src/ant/sourcepool
+ * 소스 관리자
+ *
+ */
+package com.antsoft.ant.pool.sourcepool;
+
+import java.io.*;
+
+import javax.swing.text.*;
+import javax.swing.event.*;
+import javax.swing.text.GapContent;
+
+import com.antsoft.ant.util.Constants;
+
+/**
+ *  class JavaDocument
+ *
+ *  @author Jinwoo Baek
+ */
+public class JavaDocument extends PlainDocument {
+  boolean isModified;
+  JavaContext styles = new JavaContext();
+  boolean mode = true;
+
+	/**
+	 *  Constructor
+	 */
+  public JavaDocument() {
+    super(new GapContent(1024));
+    isModified = false;
+  }
+
+	/**
+	 *  현 Document가 Modify되었는지 본다.
+	 */
+  boolean isModified() {
+    return isModified;
+  }
+
+	/**
+	 *  Dirty를 셋팅한다.
+	 */
+  void setModified(boolean mod) {
+    isModified = mod;
+  }
+
+  public void setMode(boolean b) {
+  	mode = b;
+  }
+
+	/**
+	 *  현 Document에 관련된 Context를 얻어온다.
+	 */
+  JavaContext getPreferences() {
+    return styles;
+  }
+
+	/**
+	 *  Context를 셋팅한다.
+	 */
+  void setPreferences(JavaContext styles) {
+    this.styles = styles;
+  }
+
+  /**
+   *  Document 가 저장되었을 때 저장되었음을 다른 모듈에게 알리기 위한 편법
+   */
+  void saved() {
+  	this.isModified = false;
+  	fireChangedUpdate(new AbstractDocument.DefaultDocumentEvent(0, 0, null));
+  }
+
+  public void insertString(int offset, String str, AttributeSet a) throws BadLocationException {
+		if (mode)
+			super.insertString(offset, str, a);
+    else {
+			char[] text = getText(0, getLength()).toCharArray();
+			int i = offset;
+			while (i < text.length && i - offset < str.length()) {
+      	if (getText(i, 1).equals(Constants.lineSeparator) ||
+        		getText(i, 1).equals("\n")) break;
+				remove(i, 1);
+				i++;
+			}
+			super.insertString(offset, str, a);
+		}
+  }
+
+  public void insertString(int offset, String str) throws BadLocationException {
+  	super.insertString(offset, str, null);
+  }
+
+	/**
+	 * Updates document structure as a result of text insertion.  This
+	 * will happen within a write lock.  The superclass behavior of
+	 * updating the line map is executed followed by marking any comment
+	 * areas that should backtracked before scanning.
+	 *
+	 * @param chng the change event
+	 * @param attr the set of attributes
+	 */
+	protected void insertUpdate(DefaultDocumentEvent chng, AttributeSet attr) {
+    isModified = true;
+		super.insertUpdate(chng, attr);
+
+		// update comment marks
+    // 현재 Document에서 Root Element를 얻어온다.
+    // 질문 : 모든 Document는 Root로 부터 시작하는가?
+		Element root = getDefaultRootElement();
+    // Root Element에서 변화된 값이 있는지 얻어온다.
+		DocumentEvent.ElementChange ec = chng.getChange(root);
+		if (ec != null) { // 만약 변화된 값이 있으면
+      // Root Element의 Child Element들을 얻어온다.
+			Element[] added = ec.getChildrenAdded();
+      // 현재 Element가 주석문 안에 있는지를 체크하는 변수
+			boolean inComment = false;
+
+      // Child Element를 하나씩 살펴가면서
+			for (int i = 0; i < added.length; i++) {
+				Element elem = added[i];
+        // 이 Document에서 현재 Element의 시작 위치를 얻음.
+				int p0 = elem.getStartOffset();
+        // 이 Document에서 현재 Element의 끝 위치를 얻음.
+				int p1 = elem.getEndOffset();
+				String s;
+				try {
+          // Document에서 현재 Element의 값을 얻어옴.
+					s = getText(p0, p1 - p0);
+				} catch (BadLocationException bl) {
+					s = null;
+				}
+				if (inComment) { // 만약 현재 Element가 주석문 안에 있으면
+          // 주석문 특성(Attribute)를 추가한다.
+					MutableAttributeSet a = (MutableAttributeSet) elem.getAttributes();
+					a.addAttribute(CommentAttribute, CommentAttribute);
+					int index = s.indexOf("*/"); // 주석문이 끝나는지 보고
+					if (index >= 0) { // 끝나면 주석문이 아님을 처리
+						// found an end of comment, turn off marks
+						inComment = false;
+					}
+				} else { // 현재 Element가 주석문 안에 있지 않으면
+					// scan for multiline comment
+					int index = s.indexOf("/*"); // 주석문을
+					if (index >= 0) {
+						// found a start of comment, see if it spans lines
+   					MutableAttributeSet a = (MutableAttributeSet) elem.getAttributes();
+   					a.addAttribute(CommentAttribute, CommentAttribute);
+
+						index = s.indexOf("*/", index); // 주석문이 끝나는지 보고
+						if (index < 0) {  // 끝나지 않았으면 주석문임을 처리
+							// it spans lines
+      				inComment = true;
+						}
+					}
+				}
+			}
+    }
+	}
+
+	/**
+	 * Updates any document structure as a result of text removal.
+	 * This will happen within a write lock.  The superclass behavior of
+	 * updating the line map is executed followed by placing a lexical
+	 * update command on the analyzer queue.
+	 *
+	 * @param chng the change event
+	 */
+	protected void removeUpdate(DefaultDocumentEvent chng) {
+    isModified = true;
+		super.removeUpdate(chng);
+
+		// update comment marks
+	}
+
+	// --- variables ------------------------------------------------
+
+	/**
+	 * Key to be used in AttributeSet's holding a value of Token.
+	 */
+	static final Object CommentAttribute = new AttributeKey();
+
+	/**
+	 * AttributeKey class
+	 */
+	static class AttributeKey {
+
+		private AttributeKey() {
+		}
+
+		public String toString() {
+			return "comment";
+		}
+	}
+
+  	/**
+	 * Create a lexical analyzer for this document.
+	 */
+	public Scanner createScanner() {
+		Scanner s;
+		try {
+			s = new Scanner(new LocalEnvironment(),
+                      new DocumentInputStream(0, getLength()));
+		} catch (IOException e) {
+			s = null;
+		}
+		return s;
+	}
+
+	/**
+	 * Fetch a reasonable location to start scanning
+	 * given the desired start location.  This allows
+	 * for adjustments needed to accomodate multiline
+	 * comments.
+	 */
+	public int getScannerStart(int p) {
+		Element elem = getDefaultRootElement();
+		int lineNum = elem.getElementIndex(p);
+		Element line = elem.getElement(lineNum);
+//    System.err.println(line);
+		AttributeSet a = line.getAttributes();
+		while (a.isDefined(CommentAttribute) && lineNum > 0) {
+			lineNum -= 1;
+			line = elem.getElement(lineNum);
+			a = line.getAttributes();
+		}
+		//return line.getStartOffset();
+		return 0;
+	}
+
+  /**
+	 * Scanner class
+	 */
+	public class Scanner extends sun.tools.java.Scanner {
+
+		Scanner(LocalEnvironment le, DocumentInputStream dis) throws IOException {
+//      LocalEnvironment le = new LocalEnvironment();
+//      DocumentInputStream dis = new DocumentInputStream(0, getLength());
+
+      super(le, dis);
+//			super(new LocalEnvironment(), new DocumentInputStream(0, getLength()));
+			scanComments = true;
+		}
+
+		/**
+		 * Sets the range of the scanner.  This should be called
+		 * to reinitialize the scanner to the desired range of
+		 * coverage.
+		 */
+		public void setRange(int p0, int p1) throws IOException {
+			useInputStream(new DocumentInputStream(p0, p1));
+			this.p0 = p0;
+		}
+
+		/**
+		 * This fetches the starting location of the current
+		 * token in the document.
+		 */
+		public final int getStartOffset() {
+			int begOffs = (int) (pos & MAXFILESIZE);
+			return p0 + begOffs;
+		}
+
+		/**
+		 * This fetches the ending location of the current
+		 * token in the document.
+		 */
+		public final int getEndOffset() {
+			int endOffs = (int) (getEndPos() & MAXFILESIZE);
+			return p0 + endOffs;
+		}
+
+		int p0;
+	}
+
+	/**
+	 * Class to provide InputStream functionality from a portion of a
+	 * Document.  This really should be a Reader, but not enough
+	 * things use it yet.
+	 */
+	class DocumentInputStream extends InputStream {
+		public DocumentInputStream(int p0, int p1) {
+			this.segment = new Segment();
+			this.p0 = p0;
+			this.p1 = Math.min(getLength(), p1);
+			pos = p0;
+			try {
+				loadSegment();
+			} catch (IOException ioe) {
+				throw new Error("unexpected: " + ioe);
+			}
+		}
+
+		/**
+		 * Reads the next byte of data from this input stream. The value
+		 * byte is returned as an <code>int</code> in the range
+		 * <code>0</code> to <code>255</code>. If no byte is available
+		 * because the end of the stream has been reached, the value
+		 * <code>-1</code> is returned. This method blocks until input data
+		 * is available, the end of the stream is detected, or an exception
+		 * is thrown.
+		 * <p>
+		 * A subclass must provide an implementation of this method.
+		 *
+		 * @return the next byte of data, or <code>-1</code> if the end of the
+		 * stream is reached.
+		 * @exception  IOException  if an I/O error occurs.
+		 * @since  JDK1.0
+		 */
+		public int read() throws IOException {
+// 원래의 소스 파일
+/*
+			if (index >= segment.offset + segment.count) {
+				if (pos >= p1) {
+					// no more data
+					return -1;
+				}
+				loadSegment();
+			}
+
+			return segment.array[index++];
+*/
+      if ( index >= byteSegment.length ) {
+        if ( pos >= p1 ) {
+          // no more data
+          return -1;
+        }
+        loadSegment();
+      }
+
+      return byteSegment[index++];
+		}
+
+    /**
+     *
+     */
+		void loadSegment() throws IOException {
+// 원래의 소스 파일
+/*			try {
+				int n = Math.min(1024, p1 - pos);
+				getText(pos, n, segment);
+				pos += n;
+				index = segment.offset;
+			} catch (BadLocationException e) {
+				throw new IOException("Bad location");
+			}
+*/
+			try {
+				int n = Math.min(1024, p1 - pos);
+				getText(pos, n, segment);
+				pos += n;
+        byteSegment = ( new String( segment.array, segment.offset, segment.count )).getBytes();
+
+        /* for Debug */
+/*
+        if ( byteSegment == null )
+          System.out.println( "Byte Segment is null " );
+
+        System.out.println( " -- In loadSegment() -- " );
+        System.out.println( " Segment.array: " + segment.toString() );
+        System.out.println( "in loadsegment() byteSegment: " + new String( byteSegment ) );
+*/
+        index = 0;
+			} catch (BadLocationException e) {
+				throw new IOException("Bad location");
+			}
+		}
+
+		Segment segment;
+		int p0;// start position
+		int p1;// end position
+		int pos;   // pos in document
+		int index; // index into array of the segment
+    byte[] byteSegment; // Convert char array to byte array to provide inputstream
+	}
+
+	/**
+	 *  LocalEvironment class
+	 */
+	static class LocalEnvironment extends sun.tools.java.Environment {
+		public void error(Object source, int where, String err,
+			  Object arg1, Object arg2, Object arg3) {
+			// should do something useful...
+		//	System.err.println(err);
+//			System.err.println("location: " + where);
+		}
+	}
+}

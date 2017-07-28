@@ -1,0 +1,350 @@
+/*
+ * $Header: /AntIDE/source/ant/pool/classpool/ClassPool.java 19    99-05-20 8:21p Remember $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 19 $
+ * $History: ClassPool.java $
+ * 
+ * *****************  Version 19  *****************
+ * User: Remember     Date: 99-05-20   Time: 8:21p
+ * Updated in $/AntIDE/source/ant/pool/classpool
+ * 
+ * *****************  Version 18  *****************
+ * User: Multipia     Date: 99-05-16   Time: 11:52p
+ * Updated in $/AntIDE/source/ant/pool/classpool
+ * 
+ * *****************  Version 17  *****************
+ * User: Remember     Date: 99-05-15   Time: 5:35a
+ * Updated in $/AntIDE/source/ant/pool/classpool
+ * 
+ * *****************  Version 16  *****************
+ * User: Remember     Date: 99-05-12   Time: 4:52p
+ * Updated in $/AntIDE/source/ant/pool/classpool
+ * 
+ * *****************  Version 15  *****************
+ * User: Remember     Date: 99-05-10   Time: 3:27p
+ * Updated in $/AntIDE/source/ant/pool/classpool
+ *
+ * *****************  Version 13  *****************
+ * User: Remember     Date: 99-05-09   Time: 3:04p
+ * Updated in $/AntIDE/source/ant/pool/classpool
+ * 안쓰이는 함수들 정리
+ *
+ * *****************  Version 12  *****************
+ * User: Remember     Date: 99-05-06   Time: 3:53p
+ * Updated in $/AntIDE/source/ant/pool/classpool
+ * getSuperClass() 버그 패치 (null point)
+ *
+ * *****************  Version 1  *****************
+ * User: Remember     Date: 98-10-10   Time: 8:27p
+ * Created in $/JavaProjects/src/ant/classpool
+ * classpool modul
+ *
+ */
+
+ package com.antsoft.ant.pool.classpool;
+
+ import java.lang.reflect.*;
+ import java.util.Hashtable;
+ import java.util.Vector;
+ import javax.swing.table.TableModel;
+
+ import com.antsoft.ant.util.*;
+ import com.antsoft.ant.pool.librarypool.*;
+ import com.antsoft.ant.manager.projectmanager.*;
+
+ /**
+  * class의 reflection 정보를 제공한다
+  *
+  * @author Kim sang kyun
+  */
+
+ public class ClassPool {
+
+   //exist를 호출 했을때 load해놓은 class instance
+   private static Class cachedInstance;
+
+   /**
+    * default constructor
+    */
+   public ClassPool(){
+   }
+
+   /**
+    * interface인지 아닌지 정보를 제공. package browser에서 처음에
+    * class list를 보여줄때 사용한다
+    *
+    * @param fullClassName classname
+    * @return interface인지 class인지 정보
+    */
+   public boolean isInterface(String fullClassName) throws java.lang.ClassNotFoundException{
+     Class instance = getClassInstance(fullClassName);
+
+     if(instance != null){
+       return instance.isInterface();
+     }
+     else return false;
+   }
+
+   /**
+    * class instance를 반환한다
+    *
+    * @param fullClassName key
+    * @return class instance
+    */
+   private Class getClassInstance(String fullClassName){
+
+     if( (cachedInstance != null) && cachedInstance.getName().equals(fullClassName)) {
+       return  cachedInstance;
+     }
+
+     Class instance = null;
+     try{
+       instance = createClassInstance(fullClassName);
+       cachedInstance = instance;
+
+     }catch(ClassNotFoundException e){ instance = null; }
+
+     return instance;
+   }
+
+   /**
+    * class instance가 존재하는지 알아본다
+    *
+    * @param fullClassName fullClassName to Search
+    * @return exist or not flag
+    */
+   public static boolean exist(String fullClassName){
+     if( (cachedInstance != null) && cachedInstance.getName().equals(fullClassName)) return true;
+
+     FileClassLoader loader = ProjectManager.getCurrentProject().getPathModel().getClassLoader();
+     if(loader == null) return false;
+
+     Class instance = null;
+     try{
+       instance = loader.loadClass(fullClassName, true);
+     }catch(Exception e){
+       return false;
+     }
+
+     if(instance == null) return false;
+     else {
+       cachedInstance = instance;
+       return true;
+     }
+   }
+
+   /**
+    * class instance를 얻는다
+    *
+    * @param fullClassName classname
+    * @return Class instance
+    */
+   private Class createClassInstance(String fullClassName) throws java.lang.ClassNotFoundException{
+
+     Class loaded = null;
+     FileClassLoader classLoader = ProjectManager.getCurrentProject().getPathModel().getClassLoader();
+
+     if(classLoader == null) {
+       System.out.println("Class Loader is NULL");
+       throw new ClassNotFoundException("CurrentProject's ClassLoader is NULL");
+     }
+
+     try{
+       loaded = classLoader.loadClass(fullClassName, true);
+     }catch(Exception e){ e.printStackTrace(); return null; }
+
+     return loaded;
+   }
+
+   /**
+    * get super class vector
+    */
+   public Vector getSuperClasses(String fullClassName){
+     Vector ret = new Vector(4, 2);
+
+     Class instance = getClassInstance(fullClassName);
+     if(instance == null) return null;
+
+     ret.addElement(fullClassName);
+     instance = instance.getSuperclass();
+     while(instance != null){
+       ret.addElement(instance.getName());
+       instance = instance.getSuperclass();
+     }
+
+     return ret;
+   }
+
+   /**
+    * 특정 class의 static field name list를 얻는다
+    *
+    * @param fullClassName classname
+    * @return static field name list
+    */
+   public Vector getStaticFieldSignatures(String fullClassName){
+
+     Vector ret = new Vector(15, 5);
+     Vector signatures = getFieldSignatures(fullClassName);
+     if(signatures != null){
+       for(int i=0; i<signatures.size(); i++){
+         SigModelImpl sig = (SigModelImpl)signatures.elementAt(i);
+         if(sig.isStatic()) ret.addElement(sig);
+       }
+       return ret;
+     }
+     else {
+       // it must be not happened..
+       return null;
+     }
+   }
+
+
+   /**
+    * 특정 class의 field name list를 얻는다
+    *
+    * @param fullClassName classname
+    * @return field name list
+    */
+   public Vector getFieldSignatures(String fullClassName){
+  
+     Class classInstance = getClassInstance(fullClassName);
+     if(classInstance == null) return null;
+
+     Field [] fields = classInstance.getFields();
+
+     Vector signatures = new Vector();
+     for(int i=0; i<fields.length; i++){
+       SigModelImpl model = new SigModelImpl();
+       model.setType(SigModelImpl.FIELD);
+       model.setName(fields[i].getName());
+       model.setFullClassName(fullClassName);
+       model.setTypeInstance(fields[i].getType());
+       model.setStatic(Modifier.isStatic(fields[i].getModifiers()));
+       signatures.addElement(model);
+     }
+     signatures = getSortedNames(signatures);
+     return signatures;
+   }
+
+   /**
+    * 특정 class의 constructor name list를 얻는다
+    *
+    * @param fullClassName classname
+    * @return constructor name list
+    */
+   public Vector getConstructorSignatures(String fullClassName){
+     Class classInstance = getClassInstance(fullClassName);
+     if(classInstance == null) return null;
+
+     Constructor [] constructors = classInstance.getConstructors();
+
+     Vector signatures = new Vector();
+     for(int i=0; i<constructors.length; i++){
+       SigModelImpl sigModel = new SigModelImpl();
+       sigModel.setType(SigModelImpl.CONSTRUCTOR);
+       sigModel.setName(constructors[i].getName());
+       sigModel.setFullClassName(fullClassName);
+       sigModel.setParamterTypes(constructors[i].getParameterTypes());
+       signatures.addElement(sigModel);
+     }
+
+     signatures = getSortedNames(signatures);
+     return signatures;
+   }
+
+   /**
+    * 특정 class의 static method name list를 얻는다
+    *
+    * @param fullClassName classname
+    * @return static method name list
+    */
+   public Vector getStaticMethodSignatures(String fullClassName){
+
+     Vector ret = new Vector(15, 5);
+     Vector signatures = getMethodSignatures(fullClassName);
+     if(signatures != null)
+     {
+       for(int i=0; i<signatures.size(); i++){
+         SigModelImpl sig = (SigModelImpl)signatures.elementAt(i);
+         if(sig.isStatic()) ret.addElement(sig);
+       }
+       return ret;
+     }
+     else {
+       // it must be not happened..
+       return null;
+     }
+   }
+
+
+   /**
+    * 특정 class의 method name list를 얻는다
+    *
+    * @param fullClassName classname
+    * @return method name list
+    */
+   public Vector getMethodSignatures(String fullClassName){
+
+     Class classInstance = getClassInstance(fullClassName);
+     if(classInstance == null) return null;
+
+     Method [] methods = classInstance.getMethods();
+
+     Vector signatures = new Vector();
+     for(int i=0; i<methods.length; i++){
+       SigModelImpl sigModel = new SigModelImpl();
+       sigModel.setType(SigModelImpl.METHOD);
+       sigModel.setName(methods[i].getName());
+       sigModel.setFullClassName(fullClassName);
+       sigModel.setTypeInstance(methods[i].getReturnType());
+       sigModel.setParamterTypes(methods[i].getParameterTypes());
+       sigModel.setStatic(Modifier.isStatic(methods[i].getModifiers()));
+
+       signatures.addElement(sigModel);
+     }
+     return signatures;
+   }
+
+   /**
+    * sorting 시켜준다
+    *
+    * @param unSorted unsorted vector
+    * @return sorted vector
+    */
+   public Vector getSortedNames(Vector unSorted) {
+     Hashtable dataH = new Hashtable();
+     Vector dataV = new Vector();
+     Vector returnV = new Vector();
+
+     for(int i=0; i<unSorted.size(); i++){
+       SigModelImpl sigModel = (SigModelImpl)unSorted.elementAt(i);
+       dataH.put(sigModel.toString(), sigModel);
+       dataV.addElement(sigModel.toString());
+     }
+
+     dataV = QuickSorter.sort(dataV, QuickSorter.LESS_STRING);
+
+     for(int i=0; i<dataV.size(); i++){
+       returnV.addElement((SigModelImpl)dataH.get((String)dataV.elementAt(i)));
+     }
+     return returnV;
+   }
+
+   /**
+    * return super class name
+    */
+   public String getSuperClass(String fullClassName){
+     Class original = getClassInstance(fullClassName);
+
+     if(original == null) return null;
+     if(original.getSuperclass() == null) return null;
+     else  return original.getSuperclass().getName();
+   }
+ }
+
+

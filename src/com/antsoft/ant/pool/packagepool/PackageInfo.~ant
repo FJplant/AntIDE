@@ -1,0 +1,143 @@
+/*
+ * $Header: /AntIDE/source/ant/pool/packagepool/PackageInfo.java 3     99-05-20 8:20p Remember $
+ * Ant ( JDK wrapper Java IDE )
+ * Version 1.0
+ * Copyright (c) 1998-1999 Antsoft Co. All rights reserved.
+ *  This program and source file is protected by Korea and international
+ * Copyright laws.
+ *
+ * $Revision: 3 $
+ * $History: PackageInfo.java $
+ * 
+ * *****************  Version 3  *****************
+ * User: Remember     Date: 99-05-20   Time: 8:20p
+ * Updated in $/AntIDE/source/ant/pool/packagepool
+ * 
+ * *****************  Version 2  *****************
+ * User: Multipia     Date: 99-05-16   Time: 11:54p
+ * Updated in $/AntIDE/source/ant/pool/packagepool
+ * 
+ * *****************  Version 4  *****************
+ * User: Remember     Date: 98-10-17   Time: 4:08a
+ * Updated in $/JavaProjects/src/ant/pool/packagepool
+ * 
+ * *****************  Version 3  *****************
+ * User: Remember     Date: 98-10-16   Time: 12:46a
+ * Updated in $/JavaProjects/src/ant/pool/packagepool
+ * 
+ * *****************  Version 2  *****************
+ * User: Remember     Date: 98-10-14   Time: 9:19p
+ * Updated in $/JavaProjects/src/ant/pool/packagepool
+ * ant.packagepool -> ant.pool.packagepool
+ * 
+ * *****************  Version 1  *****************
+ * User: Remember     Date: 98-10-14   Time: 3:43a
+ * Created in $/JavaProjects/src/ant/packagepool
+ *
+ * *****************  Version 4  *****************
+ * User: Remember     Date: 98-09-07   Time: 10:04p
+ * Updated in $/Ant/src/ant/browser/packagebrowser
+ * 
+ * *****************  Version 3  *****************
+ * User: Multipia     Date: 98-07-15   Time: 4:09p
+ * Updated in $/Ant/src
+ * 포함하고 있는 Class Name들을 반환하는 함수 추가
+ * 
+ * *****************  Version 2  *****************
+ * User: Multipia     Date: 98-07-14   Time: 3:40p
+ * Updated in $/Ant/src
+ * package 이름을 ant --> Ant로 변경
+ *
+ * *****************  Version 1  *****************
+ * User: Multipia     Date: 98-07-14   Time: 2:47p
+ * Created in $/Ant/src
+ * 초기 버전
+ */
+
+package com.antsoft.ant.pool.packagepool;
+
+import  java.util.Vector;
+import  java.util.Enumeration;
+import com.antsoft.ant.util.QuickSorter;
+
+/**
+ * Package 리스트를 가지고 있기 위한 Class
+ *
+ * @author 권영모
+ * @author Kim sang kyun
+ */
+public class PackageInfo {
+    private String name;
+    private Vector classNames;
+    private Vector shortClassNames;
+
+    /**
+     * Default Constructor
+     */
+    public PackageInfo() {
+      classNames = new Vector();
+      shortClassNames = new Vector();
+    }
+
+    public int getSize(){
+      return classNames.size();
+    }
+
+    /**
+     * Package의 이름을 지정한다
+     *
+     * @param name  Package name
+     */
+    public void setName( String name ) {
+        this.name = name;
+    }
+
+    /**
+     * Package의 이름을 가져온다
+     *
+     * @return Package Name
+     */
+    public String getName( ) {
+        return name;
+    }
+
+    /**
+     * Class name을 추가한다
+     *
+     * @param className 추가할 class name
+     */
+    public void addClassName( String className ) {
+      classNames.addElement(className);
+      shortClassNames.addElement(getShortName(className));
+    }
+
+    /**
+     * Class Name 들을 반환한다.
+     *
+     * @return Class Name Enumeration
+     */
+    public Enumeration getClassNames(){
+        return QuickSorter.sort(classNames, QuickSorter.LESS_STRING).elements();
+    }
+
+    /**
+     * 확장자 없는 Class Name 들을 반환한다.
+     *
+     * @return Class Name Enumeration without extension ( .class )
+     */
+    public Enumeration getClassNamesWithoutExtension(){
+        return QuickSorter.sort(shortClassNames, QuickSorter.LESS_STRING).elements();
+    }
+
+    /**
+     * example.class -> example
+     *
+     * @param fullClassName example.class
+     * @return example
+     */
+    private String getShortName(String fullClassName){
+      return fullClassName.substring(0, fullClassName.lastIndexOf("."));
+    }
+}
+
+
