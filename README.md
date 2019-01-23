@@ -52,9 +52,11 @@ CONTENTS:
 6.  Submitting bug reports
 
    The FAQ : http://www.antsoft.co.kr/ant/faq.html ( 수정 예정 )
+   
    Known Bugs : http://www.antsoft.co.kr/ant/known_bugs.html ( 수정 예정 )
 
    Bug report를 제출하길 원하시면 다음의 online form을 이용하십시오
+   
    http://www.antsoft.co.kr/ant/bug_report.html ( 수정 예정 )
 
 ------------------------------------------------------------------------
