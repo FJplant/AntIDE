@@ -32,9 +32,7 @@ CONTENTS:
 
 2.  Tutorials 
    
-   Ant 1.0의 소개글과, 간단한 Tutorial은 Ant 1.0 Homepage에서 제공됩니다.
-
-   http://www.antsoft.co.kr/ant
+   Ant 1.0의 소개글과, 간단한 Tutorial은 ./docs를 참고하세요.
 
 
 3.  Software Requirements
@@ -49,16 +47,15 @@ CONTENTS:
 
 5.  Known Bugs
 
-   최근의 Bug List를 보기 위해서 다음 사이트를 참조하시기 바랍니다.
-   http://www.antsoft.co.kr/ant/known_bugs.html
+   최근의 Bug List를 보기 위해서 ./docs를 참고 하시기 바랍니다.
 
 6.  Submitting bug reports
 
-   The FAQ : http://www.antsoft.co.kr/ant/faq.html
-   Known Bugs : http://www.antsoft.co.kr/ant/known_bugs.html
+   The FAQ : http://www.antsoft.co.kr/ant/faq.html ( 수정 예정 )
+   Known Bugs : http://www.antsoft.co.kr/ant/known_bugs.html ( 수정 예정 )
 
    Bug report를 제출하길 원하시면 다음의 online form을 이용하십시오
-   http://www.antsoft.co.kr/ant/bug_report.html
+   http://www.antsoft.co.kr/ant/bug_report.html ( 수정 예정 )
 
 ------------------------------------------------------------------------
 Copyright (c) 1998-1999 Antsoft Co.
