@@ -8,7 +8,7 @@ This file contains important information about this release.
 
 For the latest information, please check
 
-    http://www.antsoft.co.kr/ant
+    http://www.a ntsoft.co.kr/ant ( To be updated... ) 
 
 ------------------------------------------------------------------------
 
